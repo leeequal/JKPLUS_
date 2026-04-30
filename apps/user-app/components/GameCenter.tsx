@@ -1,0 +1,985 @@
+
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+
+// ==========================================
+// Common Utilities & Hooks
+// ==========================================
+
+function useInterval(callback: () => void, delay: number | null) {
+    const savedCallback = useRef<() => void>(null);
+
+    useEffect(() => {
+        savedCallback.current = callback;
+    }, [callback]);
+
+    useEffect(() => {
+        if (delay !== null) {
+            const id = setInterval(() => {
+                if (savedCallback.current) savedCallback.current();
+            }, delay);
+            return () => clearInterval(id);
+        }
+    }, [delay]);
+}
+
+// ==========================================
+// Game 1: AI Omok (오목)
+// ==========================================
+const OmokGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+    const BOARD_SIZE = 13; 
+    const EMPTY = 0;
+    const BLACK = 1; // User
+    const WHITE = 2; // AI
+
+    const [board, setBoard] = useState<number[][]>(() => 
+        Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(EMPTY))
+    );
+    const [gameStatus, setGameStatus] = useState<'playing' | 'won' | 'lost' | 'draw'>('playing');
+    const [turn, setTurn] = useState<number>(BLACK);
+    const [lastMove, setLastMove] = useState<{r: number, c: number} | null>(null);
+    const [isAiThinking, setIsAiThinking] = useState(false);
+
+    const resetGame = () => {
+        setBoard(Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(EMPTY)));
+        setGameStatus('playing');
+        setTurn(BLACK);
+        setLastMove(null);
+        setIsAiThinking(false);
+    };
+
+    const checkWin = (currentBoard: number[][], r: number, c: number, player: number) => {
+        const directions = [[0, 1], [1, 0], [1, 1], [1, -1]]; 
+        for (const [dr, dc] of directions) {
+            let count = 1;
+            for (let i = 1; i < 5; i++) {
+                const nr = r + dr * i;
+                const nc = c + dc * i;
+                if (nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE || currentBoard[nr][nc] !== player) break;
+                count++;
+            }
+            for (let i = 1; i < 5; i++) {
+                const nr = r - dr * i;
+                const nc = c - dc * i;
+                if (nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE || currentBoard[nr][nc] !== player) break;
+                count++;
+            }
+            if (count >= 5) return true;
+        }
+        return false;
+    };
+
+    const handleCellClick = (r: number, c: number) => {
+        if (gameStatus !== 'playing' || turn !== BLACK || board[r][c] !== EMPTY || isAiThinking) return;
+
+        const newBoard = board.map(row => [...row]);
+        newBoard[r][c] = BLACK;
+        setBoard(newBoard);
+        setLastMove({ r, c });
+
+        if (checkWin(newBoard, r, c, BLACK)) {
+            setGameStatus('won');
+            return;
+        }
+
+        setTurn(WHITE);
+    };
+
+    useEffect(() => {
+        if (turn === WHITE && gameStatus === 'playing') {
+            setIsAiThinking(true);
+            const timer = setTimeout(() => {
+                makeAIMove();
+                setIsAiThinking(false);
+            }, 600);
+            return () => clearTimeout(timer);
+        }
+    }, [turn, gameStatus]);
+
+    const makeAIMove = () => {
+        setBoard(prevBoard => {
+            const bestMove = getBestMove(prevBoard);
+            
+            if (!bestMove) {
+                setGameStatus('draw');
+                return prevBoard;
+            }
+
+            const currentBoard = prevBoard.map(row => [...row]);
+            currentBoard[bestMove.r][bestMove.c] = WHITE;
+            setLastMove({ r: bestMove.r, c: bestMove.c });
+            
+            if (checkWin(currentBoard, bestMove.r, bestMove.c, WHITE)) {
+                setGameStatus('lost');
+            } else {
+                setTurn(BLACK);
+            }
+            return currentBoard;
+        });
+    };
+
+    const getBestMove = (currentBoard: number[][]) => {
+        let bestScore = -Infinity;
+        let bestMoves: {r: number, c: number}[] = [];
+        const center = Math.floor(BOARD_SIZE / 2);
+
+        // 1. Check for immediate win
+        for (let r = 0; r < BOARD_SIZE; r++) {
+            for (let c = 0; c < BOARD_SIZE; c++) {
+                if (currentBoard[r][c] === EMPTY) {
+                    const tempBoard = currentBoard.map(row => [...row]);
+                    tempBoard[r][c] = WHITE;
+                    if (checkWin(tempBoard, r, c, WHITE)) return { r, c };
+                }
+            }
+        }
+        // 2. Check for immediate threat (Block)
+        for (let r = 0; r < BOARD_SIZE; r++) {
+            for (let c = 0; c < BOARD_SIZE; c++) {
+                if (currentBoard[r][c] === EMPTY) {
+                    const tempBoard = currentBoard.map(row => [...row]);
+                    tempBoard[r][c] = BLACK;
+                    if (checkWin(tempBoard, r, c, BLACK)) return { r, c };
+                }
+            }
+        }
+
+        // 3. Evaluate positions
+        for (let r = 0; r < BOARD_SIZE; r++) {
+            for (let c = 0; c < BOARD_SIZE; c++) {
+                if (currentBoard[r][c] === EMPTY) {
+                    let hasNeighbor = false;
+                    const range = 2;
+                    for(let dr = -range; dr <= range; dr++) {
+                        for(let dc = -range; dc <= range; dc++) {
+                            if (dr===0 && dc===0) continue;
+                            const nr = r + dr, nc = c + dc;
+                            if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE && currentBoard[nr][nc] !== EMPTY) {
+                                hasNeighbor = true; break;
+                            }
+                        }
+                        if(hasNeighbor) break;
+                    }
+                    if (!hasNeighbor && r === center && c === center) hasNeighbor = true;
+                    if (!hasNeighbor) continue;
+
+                    let score = (BOARD_SIZE - Math.abs(r - center) - Math.abs(c - center));
+                    score += evaluatePosition(currentBoard, r, c, WHITE) * 1.2;
+                    score += evaluatePosition(currentBoard, r, c, BLACK) * 1.0;
+
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMoves = [{r, c}];
+                    } else if (score === bestScore) {
+                        bestMoves.push({r, c});
+                    }
+                }
+            }
+        }
+
+        if (bestMoves.length === 0) return { r: center, c: center };
+        return bestMoves[Math.floor(Math.random() * bestMoves.length)];
+    };
+
+    const evaluatePosition = (currentBoard: number[][], r: number, c: number, player: number) => {
+        const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+        let score = 0;
+        for (const [dr, dc] of directions) {
+            let consecutive = 0;
+            let openEnds = 0;
+            
+            for (let i = 1; i < 5; i++) {
+                const nr = r + dr * i;
+                const nc = c + dc * i;
+                if (nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE) break;
+                if (currentBoard[nr][nc] === player) consecutive++;
+                else if (currentBoard[nr][nc] === EMPTY) { openEnds++; break; }
+                else break;
+            }
+            for (let i = 1; i < 5; i++) {
+                const nr = r - dr * i;
+                const nc = c - dc * i;
+                if (nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE) break;
+                if (currentBoard[nr][nc] === player) consecutive++;
+                else if (currentBoard[nr][nc] === EMPTY) { openEnds++; break; }
+                else break;
+            }
+            
+            if (consecutive >= 4) score += 50000;
+            else if (consecutive === 3 && openEnds === 2) score += 10000;
+            else if (consecutive === 3 && openEnds === 1) score += 1000;
+            else if (consecutive === 2 && openEnds === 2) score += 500;
+            else if (consecutive === 2 && openEnds === 1) score += 100;
+            else if (consecutive === 1 && openEnds === 2) score += 50;
+        }
+        return score;
+    };
+
+    return (
+        <div className="flex flex-col items-center bg-slate-900 rounded-xl p-3 w-full max-w-md mx-auto">
+            <div className="w-full flex justify-between items-center mb-4 px-2">
+                <h3 className="text-xl font-bold text-slate-100">⚫⚪ AI 오목</h3>
+                <div className="flex gap-2">
+                    <button onClick={resetGame} className="px-3 py-1.5 bg-amber-600 text-white text-xs font-bold rounded hover:bg-amber-500 shadow-md">재시작</button>
+                    <button onClick={onBack} className="px-3 py-1.5 bg-slate-700 text-slate-300 text-xs font-bold rounded hover:bg-slate-600 shadow-md">나가기</button>
+                </div>
+            </div>
+
+            <div className="relative bg-[#dcb35c] p-1 sm:p-2 rounded shadow-2xl border-4 border-[#8b5a2b] select-none touch-manipulation">
+                <div 
+                    className="grid relative"
+                    style={{ 
+                        gridTemplateColumns: `repeat(${BOARD_SIZE}, 1fr)`, 
+                        width: 'min(85vw, 360px)', 
+                        aspectRatio: '1/1',
+                        backgroundImage: 'linear-gradient(45deg, #dcb35c 25%, #e6c374 25%, #e6c374 50%, #dcb35c 50%, #dcb35c 75%, #e6c374 75%, #e6c374 100%)',
+                        backgroundSize: '20px 20px'
+                    }}
+                >
+                    {board.map((row, r) => 
+                        row.map((cell, c) => (
+                            <div 
+                                key={`${r}-${c}`}
+                                onClick={() => handleCellClick(r, c)}
+                                className="relative flex items-center justify-center cursor-pointer"
+                            >
+                                <div className="absolute w-full h-[1px] bg-black/40 pointer-events-none" style={{
+                                    left: c === 0 ? '50%' : (c === BOARD_SIZE - 1 ? '-50%' : '0'),
+                                    width: (c === 0 || c === BOARD_SIZE - 1) ? '50%' : '100%',
+                                    transform: c === 0 ? 'translateX(0)' : (c === BOARD_SIZE - 1 ? 'translateX(50%)' : 'none')
+                                }}></div>
+                                <div className="absolute h-full w-[1px] bg-black/40 pointer-events-none" style={{
+                                    top: r === 0 ? '50%' : (r === BOARD_SIZE - 1 ? '-50%' : '0'),
+                                    height: (r === 0 || r === BOARD_SIZE - 1) ? '50%' : '100%',
+                                    transform: r === 0 ? 'translateY(0)' : (r === BOARD_SIZE - 1 ? 'translateY(50%)' : 'none')
+                                }}></div>
+                                {BOARD_SIZE === 13 && ((r === 3 && c === 3) || (r === 3 && c === 9) || (r === 6 && c === 6) || (r === 9 && c === 3) || (r === 9 && c === 9)) && (
+                                    <div className="absolute w-1.5 h-1.5 bg-black rounded-full pointer-events-none"></div>
+                                )}
+                                {cell !== EMPTY && (
+                                    <div 
+                                        className={`w-[85%] h-[85%] rounded-full shadow-sm z-10 transition-all duration-200
+                                            ${cell === BLACK 
+                                                ? 'bg-gradient-to-br from-gray-800 to-black shadow-slate-900/50' 
+                                                : 'bg-gradient-to-br from-white to-gray-200 shadow-black/20'
+                                            }`}
+                                        style={{boxShadow: '2px 2px 2px rgba(0,0,0,0.3)'}}
+                                    >
+                                        {lastMove?.r === r && lastMove?.c === c && (
+                                            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-red-500 rounded-full border border-white/30 shadow-sm"></div>
+                                        )}
+                                    </div>
+                                )}
+                                {cell === EMPTY && turn === BLACK && gameStatus === 'playing' && !isAiThinking && (
+                                    <div className="w-3 h-3 rounded-full bg-black/20 opacity-0 hover:opacity-100 transition-opacity z-10 pointer-events-none"></div>
+                                )}
+                            </div>
+                        ))
+                    )}
+                </div>
+                {gameStatus !== 'playing' && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded z-20 backdrop-blur-[2px]">
+                        <div className="bg-slate-800 p-6 rounded-xl border border-slate-600 text-center shadow-2xl transform animate-fadeIn mx-4">
+                            <h4 className="text-2xl font-bold mb-2">
+                                {gameStatus === 'won' && <span className="text-green-400">🎉 승리하셨습니다!</span>}
+                                {gameStatus === 'lost' && <span className="text-red-400">🤖 AI가 승리했습니다.</span>}
+                                {gameStatus === 'draw' && <span className="text-slate-300">무승부입니다.</span>}
+                            </h4>
+                            <button 
+                                onClick={resetGame}
+                                className="w-full px-6 py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg transition shadow-lg mt-4"
+                            >
+                                다시 하기
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+            
+            <div className="mt-4 flex justify-center gap-8 text-sm font-medium text-slate-400 w-full">
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${turn === BLACK ? 'bg-slate-800 text-amber-400 border border-amber-500/50' : ''}`}>
+                    <div className="w-3 h-3 rounded-full bg-black border border-slate-600"></div> 나 (흑)
+                </div>
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${turn === WHITE ? 'bg-slate-800 text-amber-400 border border-amber-500/50' : ''}`}>
+                    <div className="w-3 h-3 rounded-full bg-white border border-slate-600"></div> AI (백) {isAiThinking && <span className="ml-1 animate-pulse">...</span>}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ==========================================
+// Game 2: Mahjong Solitaire (사천성)
+// ==========================================
+
+interface MahjongTile {
+    id: number;
+    value: string;
+    isMatched: boolean;
+}
+
+const MahjongGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+    const [tiles, setTiles] = useState<MahjongTile[]>([]);
+    const [selectedTileId, setSelectedTileId] = useState<number | null>(null);
+    const [matches, setMatches] = useState(0);
+    const [isGameClear, setIsGameClear] = useState(false);
+
+    // Standard Mahjong Unicode Tiles
+    const TILE_TYPES = [
+        '🀀', '🀁', '🀂', '🀃', '🀄', '🀅', '🀆', // Winds & Dragons
+        '🀇', '🀈', '🀉', '🀊', '🀋', '🀌', '🀍', '🀎', '🀏', // Characters
+        '🀐', '🀑', '🀒', '🀓', '🀔', '🀕', '🀖', '🀗', '🀘', // Bamboos
+        '🀙', '🀚', '🀛', '🀜', '🀝', '🀞', '🀟', '🀠', '🀡'  // Dots
+    ];
+
+    const GRID_COLS = 6;
+    const GRID_ROWS = 6;
+    const TOTAL_TILES = GRID_COLS * GRID_ROWS;
+
+    useEffect(() => {
+        startNewGame();
+    }, []);
+
+    const startNewGame = () => {
+        const gameTiles: MahjongTile[] = [];
+        const numPairs = TOTAL_TILES / 2;
+        
+        // Pick random types and create pairs
+        const selectedTypes = [];
+        for (let i = 0; i < numPairs; i++) {
+            const type = TILE_TYPES[Math.floor(Math.random() * TILE_TYPES.length)];
+            selectedTypes.push(type);
+            selectedTypes.push(type);
+        }
+
+        // Shuffle
+        selectedTypes.sort(() => Math.random() - 0.5);
+
+        // Create tile objects
+        selectedTypes.forEach((val, idx) => {
+            gameTiles.push({
+                id: idx,
+                value: val,
+                isMatched: false
+            });
+        });
+
+        setTiles(gameTiles);
+        setSelectedTileId(null);
+        setMatches(0);
+        setIsGameClear(false);
+    };
+
+    const handleTileClick = (id: number) => {
+        if (isGameClear) return;
+        
+        const clickedTile = tiles.find(t => t.id === id);
+        if (!clickedTile || clickedTile.isMatched) return;
+
+        if (selectedTileId === null) {
+            // First selection
+            setSelectedTileId(id);
+        } else if (selectedTileId === id) {
+            // Deselect if clicked same tile
+            setSelectedTileId(null);
+        } else {
+            // Check match
+            const firstTile = tiles.find(t => t.id === selectedTileId);
+            if (firstTile && firstTile.value === clickedTile.value) {
+                // Match found
+                setTiles(prev => prev.map(t => 
+                    (t.id === id || t.id === selectedTileId) ? { ...t, isMatched: true } : t
+                ));
+                setMatches(prev => {
+                    const newMatches = prev + 1;
+                    if (newMatches === TOTAL_TILES / 2) {
+                        setTimeout(() => setIsGameClear(true), 500);
+                    }
+                    return newMatches;
+                });
+                setSelectedTileId(null);
+            } else {
+                // No match, switch selection to new tile
+                setSelectedTileId(id);
+            }
+        }
+    };
+
+    return (
+        <div className="flex flex-col items-center bg-slate-900 rounded-xl p-3 w-full max-w-md mx-auto">
+            <div className="w-full flex justify-between items-center mb-4 px-2">
+                <h3 className="text-xl font-bold text-slate-100">🀄 사천성 마작</h3>
+                <div className="flex gap-2">
+                    <button onClick={startNewGame} className="px-3 py-1.5 bg-amber-600 text-white text-xs font-bold rounded hover:bg-amber-500 shadow-md">재시작</button>
+                    <button onClick={onBack} className="px-3 py-1.5 bg-slate-700 text-slate-300 text-xs font-bold rounded hover:bg-slate-600 shadow-md">나가기</button>
+                </div>
+            </div>
+
+            <div className="bg-slate-800/50 p-2 rounded-xl border border-slate-700 relative">
+                <div 
+                    className="grid gap-2"
+                    style={{ 
+                        gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`,
+                        width: 'min(90vw, 360px)',
+                    }}
+                >
+                    {tiles.map(tile => (
+                        <div 
+                            key={tile.id}
+                            onClick={() => handleTileClick(tile.id)}
+                            className={`
+                                aspect-[3/4] rounded-md flex items-center justify-center text-3xl sm:text-4xl shadow-md cursor-pointer transition-all duration-200 select-none
+                                ${tile.isMatched ? 'opacity-0 pointer-events-none transform scale-90' : 'opacity-100'}
+                                ${selectedTileId === tile.id 
+                                    ? 'bg-amber-100 text-amber-900 border-2 border-blue-500 -translate-y-1' 
+                                    : 'bg-amber-100 text-amber-800 border-b-4 border-amber-300 hover:border-amber-400 active:border-b-0 active:translate-y-1'
+                                }
+                            `}
+                        >
+                            {tile.value}
+                        </div>
+                    ))}
+                </div>
+
+                {isGameClear && (
+                    <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white rounded-xl z-10 animate-fadeIn">
+                        <div className="text-5xl mb-4">🀄🎉</div>
+                        <p className="text-2xl font-bold mb-2 text-amber-400">게임 클리어!</p>
+                        <p className="text-sm text-slate-300 mb-6">모든 마작패를 제거했습니다.</p>
+                        <button onClick={startNewGame} className="px-6 py-3 bg-amber-600 text-white rounded-full font-bold shadow-lg hover:bg-amber-500 transition-transform hover:scale-105">
+                            다시 도전하기
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            <div className="mt-4 w-full flex justify-between px-4 text-sm text-slate-400">
+                <span>남은 짝: {(TOTAL_TILES / 2) - matches}</span>
+                <span>매칭: {matches} / {TOTAL_TILES / 2}</span>
+            </div>
+        </div>
+    );
+};
+
+// ==========================================
+// Game 3: Construction Tetris (현장 벽돌 쌓기)
+// ==========================================
+
+const TETROMINOS = {
+    0: { shape: [[0]], color: 'bg-slate-800' },
+    I: { shape: [[0, 1], [0, 1], [0, 1], [0, 1]], color: 'bg-cyan-500' },
+    J: { shape: [[0, 1], [0, 1], [1, 1]], color: 'bg-blue-500' },
+    L: { shape: [[1, 0], [1, 0], [1, 1]], color: 'bg-orange-500' },
+    O: { shape: [[1, 1], [1, 1]], color: 'bg-yellow-500' },
+    S: { shape: [[0, 1, 1], [1, 1, 0]], color: 'bg-green-500' },
+    T: { shape: [[1, 1, 1], [0, 1, 0]], color: 'bg-purple-500' },
+    Z: { shape: [[1, 1, 0], [0, 1, 1]], color: 'bg-red-500' },
+};
+
+const STAGE_WIDTH = 10;
+const STAGE_HEIGHT = 20;
+
+const createStage = () => Array.from(Array(STAGE_HEIGHT), () => Array(STAGE_WIDTH).fill([0, 'clear']));
+
+const checkCollision = (player: any, stage: any, { x: moveX, y: moveY }: { x: number, y: number }) => {
+    for (let y = 0; y < player.tetromino.length; y += 1) {
+        for (let x = 0; x < player.tetromino[y].length; x += 1) {
+            if (player.tetromino[y][x] !== 0) {
+                if (
+                    !stage[y + player.pos.y + moveY] ||
+                    !stage[y + player.pos.y + moveY][x + player.pos.x + moveX] ||
+                    stage[y + player.pos.y + moveY][x + player.pos.x + moveX][1] !== 'clear'
+                ) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+};
+
+const TetrisGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+    const [stage, setStage] = useState(createStage());
+    const [dropTime, setDropTime] = useState<number | null>(null);
+    const [gameOver, setGameOver] = useState(false);
+    const [score, setScore] = useState(0);
+    
+    const [player, setPlayer] = useState({
+        pos: { x: 0, y: 0 },
+        tetromino: TETROMINOS[0].shape,
+        collided: false,
+    });
+
+    const movePlayer = (dir: number) => {
+        if (!checkCollision(player, stage, { x: dir, y: 0 })) {
+            setPlayer(prev => ({ ...prev, pos: { x: prev.pos.x + dir, y: prev.pos.y } }));
+        }
+    };
+
+    const startGame = () => {
+        setStage(createStage());
+        setDropTime(1000);
+        resetPlayer();
+        setGameOver(false);
+        setScore(0);
+    };
+
+    const resetPlayer = useCallback(() => {
+        const keys = 'IJLOSTZ';
+        const randChar = keys[Math.floor(Math.random() * keys.length)] as keyof typeof TETROMINOS;
+        setPlayer({
+            pos: { x: STAGE_WIDTH / 2 - 2, y: 0 },
+            tetromino: TETROMINOS[randChar].shape,
+            collided: false,
+        });
+    }, []);
+
+    const drop = () => {
+        if (!checkCollision(player, stage, { x: 0, y: 1 })) {
+            setPlayer(prev => ({ ...prev, pos: { x: prev.pos.x, y: prev.pos.y + 1 } }));
+        } else {
+            if (player.pos.y < 1) {
+                setGameOver(true);
+                setDropTime(null);
+            }
+            setPlayer(prev => ({ ...prev, collided: true }));
+        }
+    };
+
+    const dropPlayer = () => {
+        setDropTime(null);
+        drop();
+    };
+
+    const move = ({ keyCode }: { keyCode: number }) => {
+        if (!gameOver) {
+            if (keyCode === 37) movePlayer(-1); // Left
+            else if (keyCode === 39) movePlayer(1); // Right
+            else if (keyCode === 40) dropPlayer(); // Down
+            else if (keyCode === 38) playerRotate(stage, 1); // Up (Rotate)
+        }
+    };
+
+    const playerRotate = (stage: any, dir: number) => {
+        const clonedPlayer = JSON.parse(JSON.stringify(player));
+        clonedPlayer.tetromino = rotate(clonedPlayer.tetromino, dir);
+        
+        const pos = clonedPlayer.pos.x;
+        let offset = 1;
+        while (checkCollision(clonedPlayer, stage, { x: 0, y: 0 })) {
+            clonedPlayer.pos.x += offset;
+            offset = -(offset + (offset > 0 ? 1 : -1));
+            if (offset > clonedPlayer.tetromino[0].length) {
+                rotate(clonedPlayer.tetromino, -dir);
+                clonedPlayer.pos.x = pos;
+                return;
+            }
+        }
+        setPlayer(clonedPlayer);
+    };
+
+    const rotate = (matrix: any[], dir: number) => {
+        const rotated = matrix.map((_, index) => matrix.map(col => col[index]));
+        if (dir > 0) return rotated.map(row => row.reverse());
+        return rotated.reverse();
+    };
+
+    useInterval(() => {
+        drop();
+    }, dropTime);
+
+    useEffect(() => {
+        if (player.collided) {
+            resetPlayer();
+            setScore(prev => prev + 10);
+            setDropTime(1000 / (1 + (score / 500))); // Increase speed
+        }
+    }, [player.collided]);
+
+    useEffect(() => {
+        const updateStage = (prevStage: any[]) => {
+            // Flush stage
+            const newStage = prevStage.map(row =>
+                row.map((cell: any[]) => (cell[1] === 'clear' ? [0, 'clear'] : cell))
+            );
+
+            // Draw player
+            player.tetromino.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) {
+                        if (
+                            newStage[y + player.pos.y] &&
+                            newStage[y + player.pos.y][x + player.pos.x]
+                        ) {
+                            // Store value AND color key
+                            const type = Object.keys(TETROMINOS).find(key => JSON.stringify(TETROMINOS[key as keyof typeof TETROMINOS].shape) === JSON.stringify(player.tetromino));
+                            newStage[y + player.pos.y][x + player.pos.x] = [
+                                value,
+                                `${player.collided ? 'merged' : 'clear'}`,
+                                type
+                            ];
+                        }
+                    }
+                });
+            });
+
+            if (player.collided) {
+                const sweepedStage = newStage.reduce((ack, row) => {
+                    if (row.findIndex((cell: any[]) => cell[0] === 0) === -1) {
+                        setScore(prev => prev + 100);
+                        ack.unshift(new Array(newStage[0].length).fill([0, 'clear']));
+                        return ack;
+                    }
+                    ack.push(row);
+                    return ack;
+                }, []);
+                return sweepedStage;
+            }
+
+            return newStage;
+        };
+
+        setStage(prev => updateStage(prev));
+    }, [player, resetPlayer]); // eslint-disable-line
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => move(e);
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [player, stage, gameOver]); // eslint-disable-line
+
+    const getCellColor = (cell: any[]) => {
+        if (cell[0] === 0) return 'bg-slate-800/50';
+        if (cell[2]) {
+             // @ts-ignore
+             return TETROMINOS[cell[2]]?.color || 'bg-slate-500';
+        }
+        return 'bg-slate-500'; 
+    };
+
+    return (
+        <div className="flex flex-col items-center bg-slate-900 rounded-xl p-3 w-full max-w-md mx-auto">
+            <div className="w-full flex justify-between items-center mb-4 px-2">
+                <h3 className="text-xl font-bold text-slate-100">🧱 현장 벽돌 쌓기</h3>
+                <div className="flex gap-2">
+                    <button onClick={startGame} className="px-3 py-1.5 bg-amber-600 text-white text-xs font-bold rounded hover:bg-amber-500 shadow-md">
+                        {gameOver ? '다시 시작' : '시작 / 리셋'}
+                    </button>
+                    <button onClick={onBack} className="px-3 py-1.5 bg-slate-700 text-slate-300 text-xs font-bold rounded hover:bg-slate-600 shadow-md">나가기</button>
+                </div>
+            </div>
+
+            <div className="relative border-4 border-slate-700 bg-slate-900 rounded-lg p-1 shadow-2xl">
+                <div 
+                    className="grid gap-[1px] bg-slate-700"
+                    style={{ 
+                        gridTemplateColumns: `repeat(${STAGE_WIDTH}, 1fr)`,
+                        width: '200px',
+                        height: '400px'
+                    }}
+                >
+                    {stage.map((row, y) => 
+                        row.map((cell, x) => (
+                            <div 
+                                key={`${y}-${x}`} 
+                                className={`w-full h-full border-[0.5px] border-black/10 ${getCellColor(cell)}`}
+                            />
+                        ))
+                    )}
+                </div>
+                
+                {gameOver && (
+                    <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white z-10">
+                        <p className="text-2xl font-bold mb-2 text-red-500">GAME OVER</p>
+                        <p className="text-lg">Score: {score}</p>
+                        <button onClick={startGame} className="mt-4 px-4 py-2 bg-white text-black rounded font-bold">Retry</button>
+                    </div>
+                )}
+                
+                {!dropTime && !gameOver && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 pointer-events-none z-10">
+                        <p className="text-white font-bold animate-pulse">Press Start</p>
+                    </div>
+                )}
+            </div>
+
+            <div className="mt-4 w-full px-4 flex justify-between items-center bg-slate-800 p-2 rounded-lg mb-4">
+                <span className="text-slate-400 text-sm">Score</span>
+                <span className="text-amber-400 font-bold text-xl">{score}</span>
+            </div>
+
+            {/* Mobile Controls */}
+            <div className="grid grid-cols-3 gap-2 w-full px-4 mb-2">
+                <div className="col-start-2 flex justify-center">
+                    <button 
+                        className="w-16 h-16 bg-slate-700 rounded-full shadow-lg active:bg-amber-600 flex items-center justify-center border-b-4 border-slate-900 active:border-0 active:translate-y-1 transition-all"
+                        onClick={() => playerRotate(stage, 1)}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    </button>
+                </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2 w-full px-4">
+                <div className="flex justify-center">
+                    <button 
+                        className="w-16 h-16 bg-slate-700 rounded-full shadow-lg active:bg-amber-600 flex items-center justify-center border-b-4 border-slate-900 active:border-0 active:translate-y-1 transition-all"
+                        onClick={() => movePlayer(-1)}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                    </button>
+                </div>
+                <div className="flex justify-center">
+                    <button 
+                        className="w-16 h-16 bg-slate-700 rounded-full shadow-lg active:bg-amber-600 flex items-center justify-center border-b-4 border-slate-900 active:border-0 active:translate-y-1 transition-all"
+                        onClick={() => { setDropTime(null); drop(); setDropTime(1000 / (1 + (score / 500))); }}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7-7-7" /></svg>
+                    </button>
+                </div>
+                <div className="flex justify-center">
+                    <button 
+                        className="w-16 h-16 bg-slate-700 rounded-full shadow-lg active:bg-amber-600 flex items-center justify-center border-b-4 border-slate-900 active:border-0 active:translate-y-1 transition-all"
+                        onClick={() => movePlayer(1)}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ==========================================
+// Game 4: Reaction Speed Test (안전모 잡기)
+// ==========================================
+const ReactionGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+    const [state, setState] = useState<'waiting' | 'ready' | 'now' | 'finished'>('waiting');
+    const [message, setMessage] = useState('화면을 클릭해서 시작하세요.');
+    const [startTime, setStartTime] = useState(0);
+    const [score, setScore] = useState<number | null>(null);
+    const timeoutRef = useRef<number | null>(null);
+
+    const handleMouseDown = () => {
+        if (state === 'waiting' || state === 'finished') {
+            setState('ready');
+            setMessage('초록색이 되면 클릭하세요! (기다리세요...)');
+            setScore(null);
+            
+            const randomTime = Math.floor(Math.random() * 2000) + 1000; // 1-3 seconds
+            timeoutRef.current = window.setTimeout(() => {
+                setState('now');
+                setMessage('지금 클릭하세요!!!');
+                setStartTime(Date.now());
+            }, randomTime);
+        } else if (state === 'ready') {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            setState('waiting');
+            setMessage('너무 빨랐습니다! 다시 시도하려면 클릭하세요.');
+        } else if (state === 'now') {
+            const endTime = Date.now();
+            const reactionTime = endTime - startTime;
+            setScore(reactionTime);
+            setState('finished');
+            setMessage(`${reactionTime}ms! 대단한 반사신경입니다. 다시 하려면 클릭하세요.`);
+        }
+    };
+
+    return (
+        <div 
+            className={`flex flex-col items-center justify-center h-96 rounded-xl cursor-pointer transition-colors select-none p-6 text-center
+                ${state === 'waiting' || state === 'finished' ? 'bg-slate-800' : ''}
+                ${state === 'ready' ? 'bg-red-900' : ''}
+                ${state === 'now' ? 'bg-green-600' : ''}
+            `}
+            onMouseDown={handleMouseDown}
+            onTouchStart={handleMouseDown}
+        >
+            <h3 className="text-2xl font-bold text-white mb-4">⚡ 안전 순발력 테스트</h3>
+            <p className="text-lg text-slate-200 font-medium mb-2">{message}</p>
+            {score !== null && (
+                <div className="mt-4 p-4 bg-black/30 rounded-lg">
+                    <p className="text-3xl font-bold text-amber-400">{score} ms</p>
+                </div>
+            )}
+            <div className="mt-8 text-sm text-slate-400">
+                작업 현장에서는 빠른 반응속도가 생명입니다!<br/>초록색 화면이 뜨자마자 화면을 터치하세요.
+            </div>
+            <button 
+                onClick={(e) => { e.stopPropagation(); onBack(); }}
+                className="mt-8 px-4 py-2 bg-slate-700 rounded-full text-sm hover:bg-slate-600"
+            >
+                게임 목록으로
+            </button>
+        </div>
+    );
+};
+
+// ==========================================
+// Game 5: Lucky Draw (오늘의 운세)
+// ==========================================
+const LuckyGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+    const [result, setResult] = useState<string | null>(null);
+    const [isSpinning, setIsSpinning] = useState(false);
+
+    const fortunes = [
+        "🚧 오늘은 안전운이 최고! 무사고 기원합니다.",
+        "💰 예상치 못한 수입이 생길지도 몰라요!",
+        "👷‍♂️ 좋은 동료를 만나 일이 술술 풀릴 거예요.",
+        "🍱 점심 메뉴가 아주 맛있을 예정입니다.",
+        "🌞 날씨도 좋고 컨디션도 최상이네요!",
+        "🔧 장비빨이 잘 받는 날입니다. 능률 Up!"
+    ];
+
+    const drawFortune = () => {
+        if (isSpinning) return;
+        setIsSpinning(true);
+        setResult(null);
+        
+        setTimeout(() => {
+            const randomIndex = Math.floor(Math.random() * fortunes.length);
+            setResult(fortunes[randomIndex]);
+            setIsSpinning(false);
+        }, 1500);
+    };
+
+    return (
+        <div className="flex flex-col items-center justify-center h-96 bg-slate-800 rounded-xl p-6 text-center">
+            <h3 className="text-2xl font-bold text-white mb-6">🍀 오늘의 현장 운세</h3>
+            
+            {isSpinning ? (
+                <div className="animate-spin text-6xl mb-6">🎲</div>
+            ) : (
+                <div className="text-6xl mb-6 transition-transform hover:scale-110 cursor-pointer" onClick={drawFortune}>
+                    {result ? '📜' : '🎁'}
+                </div>
+            )}
+
+            {result ? (
+                <div className="bg-amber-500/20 border border-amber-500/50 p-4 rounded-lg animate-fadeIn">
+                    <p className="text-lg font-semibold text-amber-300">{result}</p>
+                </div>
+            ) : (
+                <p className="text-slate-400">선물 상자를 눌러 오늘의 운세를 확인하세요!</p>
+            )}
+
+            <div className="mt-8 flex gap-4">
+                <button 
+                    onClick={drawFortune}
+                    disabled={isSpinning}
+                    className="px-6 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-md transition disabled:bg-slate-600"
+                >
+                    {result ? '다시 뽑기' : '운세 보기'}
+                </button>
+                <button 
+                    onClick={onBack}
+                    className="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium rounded-md transition"
+                >
+                    나가기
+                </button>
+            </div>
+        </div>
+    );
+};
+
+// ==========================================
+// Main Game Center Component
+// ==========================================
+
+interface GameItem {
+    id: string;
+    title: string;
+    description: string;
+    icon: React.ReactNode;
+    component: React.FC<{ onBack: () => void }>;
+}
+
+export const GameCenter: React.FC = () => {
+    const [activeGameId, setActiveGameId] = useState<string | null>(null);
+
+    const GAMES: GameItem[] = [
+        {
+            id: 'omok',
+            title: 'AI 오목',
+            description: '인공지능과 펼치는 두뇌 싸움! 잠시 머리를 식혀보세요.',
+            icon: <span className="text-3xl">⚫</span>,
+            component: OmokGame
+        },
+        {
+            id: 'mahjong',
+            title: '사천성 마작',
+            description: '같은 그림의 마작패를 찾아 없애는 두뇌 퍼즐 게임!',
+            icon: <span className="text-3xl">🀄</span>,
+            component: MahjongGame
+        },
+        {
+            id: 'tetris',
+            title: '현장 벽돌 쌓기',
+            description: '빈틈없이 자재를 쌓아 올리세요! 시간 가는 줄 모르는 클래식 게임.',
+            icon: <span className="text-3xl">🧱</span>,
+            component: TetrisGame
+        },
+        {
+            id: 'reaction',
+            title: '안전 순발력 테스트',
+            description: '위험 상황 감지! 신호가 오면 얼마나 빨리 반응할 수 있나요?',
+            icon: <span className="text-3xl">⚡</span>,
+            component: ReactionGame
+        },
+        {
+            id: 'lucky',
+            title: '오늘의 현장 운세',
+            description: '오늘 하루 나의 작업 운세는? 재미로 보는 오늘의 운세!',
+            icon: <span className="text-3xl">🍀</span>,
+            component: LuckyGame
+        }
+    ];
+
+    const activeGame = GAMES.find(g => g.id === activeGameId);
+
+    if (activeGame) {
+        const GameComponent = activeGame.component;
+        return (
+            <div className="animate-fadeIn">
+                <GameComponent onBack={() => setActiveGameId(null)} />
+            </div>
+        );
+    }
+
+    return (
+        <div className="animate-fadeIn">
+            <div className="mb-6 text-center">
+                <h2 className="text-2xl md:text-3xl font-bold text-slate-100">🏗️ 인력 휴게실</h2>
+                <p className="text-slate-400 mt-2">대기 시간, 지루하지 않게 간단한 게임 한 판 어떠세요?</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {GAMES.map(game => (
+                    <button
+                        key={game.id}
+                        onClick={() => setActiveGameId(game.id)}
+                        className="flex items-start p-5 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 hover:border-amber-500 rounded-xl text-left transition-all group"
+                    >
+                        <div className="p-3 bg-slate-900 rounded-lg mr-4 group-hover:scale-110 transition-transform">
+                            {game.icon}
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-200 group-hover:text-amber-400 transition-colors">
+                                {game.title}
+                            </h3>
+                            <p className="text-sm text-slate-400 mt-1 leading-relaxed">
+                                {game.description}
+                            </p>
+                        </div>
+                    </button>
+                ))}
+                
+                {/* Coming Soon Card */}
+                <div className="flex items-center justify-center p-5 bg-slate-800/30 border border-slate-700/50 rounded-xl border-dashed">
+                    <div className="text-center text-slate-500">
+                        <span className="text-2xl block mb-2">🚧</span>
+                        <p className="text-sm font-medium">새로운 게임 준비 중...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
