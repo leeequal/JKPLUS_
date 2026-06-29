@@ -99,13 +99,13 @@ export const ReportDisplay: React.FC<RegistrationStatusProps> = ({ submission, i
         : `외국인(${displayCountry || '정보 없음'})`;
 
     return (
-      <div className="bg-green-900/50 p-6 rounded-xl border border-green-700 text-green-200 animate-[fadeIn_0.5s]">
+      <div className="bg-green-50 dark:bg-green-900/50 p-6 rounded-xl border border-green-200 dark:border-green-700 text-green-800 dark:text-green-200 animate-[fadeIn_0.5s]">
         <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-5 mb-5">
             {profilePicUrl ? (
-              <img src={profilePicUrl} alt="Profile" className="w-24 h-24 rounded-full object-cover border-2 border-green-600 flex-shrink-0" />
+              <img src={profilePicUrl} alt="Profile" className="w-24 h-24 rounded-full object-cover border-2 border-green-500 dark:border-green-600 flex-shrink-0 shadow-md" />
             ) : (
-              <div className="w-24 h-24 rounded-full bg-slate-700 border-2 border-green-600 flex-shrink-0 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+              <div className="w-24 h-24 rounded-full bg-slate-100 dark:bg-slate-700 border-2 border-green-500 dark:border-green-600 flex-shrink-0 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
               </div>
             )}
             <div className="flex-1 text-center sm:text-left">
@@ -113,7 +113,7 @@ export const ReportDisplay: React.FC<RegistrationStatusProps> = ({ submission, i
               <p className="mt-1">아래 정보 및 필수 서류로 인력이 성공적으로 시스템에 등록되었습니다.</p>
             </div>
         </div>
-        <ul className="space-y-2 bg-slate-800/50 p-4 rounded-md">
+        <ul className="space-y-2 bg-white dark:bg-slate-800/50 p-4 rounded-md text-slate-700 dark:text-slate-300 border border-slate-100 dark:border-transparent">
           <li><strong>이름:</strong> {submission.name}</li>
           <li><strong>국적:</strong> {nationalityDisplay}</li>
           {submission.nationality === 'foreign' && (
@@ -126,21 +126,21 @@ export const ReportDisplay: React.FC<RegistrationStatusProps> = ({ submission, i
           <li><strong>주민등록번호:</strong> {getMaskedRrn(submission.rrn)}</li>
           <li><strong>연락처:</strong> {formatPhoneNumber(submission.phone)}</li>
           <li><strong>선호 지역:</strong> {submission.preferredAreas.join(', ')}</li>
-          <li className="pt-2 border-t border-slate-700"><strong>금융 기관:</strong> {submission.bank}</li>
+          <li className="pt-2 border-t border-slate-200 dark:border-slate-700"><strong>금융 기관:</strong> {submission.bank}</li>
           <li><strong>계좌번호:</strong> {submission.accountNumber}</li>
           <li>
             <strong>예금주명:</strong> {submission.accountHolder}
             {isHolderDifferent && <span className="ml-2 text-xs bg-yellow-600 text-yellow-100 px-2 py-0.5 rounded-full">등록명과 다름</span>}
           </li>
-          <li><strong>통장 사본:</strong> <span className="text-green-300 font-semibold">(제출 완료)</span> {submission.bankAccountFile.name}</li>
-           <li className="pt-2 border-t border-slate-700"><strong>{submission.nationality === 'korean' ? '신분증' : '외국인등록증'}:</strong> <span className="text-green-300 font-semibold">(제출 완료)</span> {submission.idCardFile.name}</li>
-           <li><strong>건설기초안전교육 이수증:</strong> <span className="text-green-300 font-semibold">(제출 완료)</span> {submission.safetyCertFile.name}</li>
-           {submission.profilePictureFile && <li><strong>프로필 사진:</strong> <span className="text-green-300 font-semibold">(제출 완료)</span> {submission.profilePictureFile.name}</li>}
-           <li className="pt-2 border-t border-slate-700"><strong>개인정보 이용 동의:</strong> <span className="text-green-300 font-semibold">(서명 완료)</span></li>
+          <li><strong>통장 사본:</strong> <span className="text-green-600 dark:text-green-300 font-semibold">(제출 완료)</span> {submission.bankAccountFile.name}</li>
+           <li className="pt-2 border-t border-slate-200 dark:border-slate-700"><strong>{submission.nationality === 'korean' ? '신분증' : '외국인등록증'}:</strong> <span className="text-green-600 dark:text-green-300 font-semibold">(제출 완료)</span> {submission.idCardFile.name}</li>
+           <li><strong>건설기초안전교육 이수증:</strong> <span className="text-green-600 dark:text-green-300 font-semibold">(제출 완료)</span> {submission.safetyCertFile.name}</li>
+           {submission.profilePictureFile && <li><strong>프로필 사진:</strong> <span className="text-green-600 dark:text-green-300 font-semibold">(제출 완료)</span> {submission.profilePictureFile.name}</li>}
+           <li className="pt-2 border-t border-slate-200 dark:border-slate-700"><strong>개인정보 이용 동의:</strong> <span className="text-green-600 dark:text-green-300 font-semibold">(서명 완료)</span></li>
            {submission.signatureDataUrl && (
             <li>
               <strong>서명:</strong>
-              <div className="mt-2 p-1 inline-block bg-slate-700 rounded-md border border-slate-600">
+              <div className="mt-2 p-1 inline-block bg-slate-50 dark:bg-slate-700 rounded-md border border-slate-200 dark:border-slate-600">
                 <img src={submission.signatureDataUrl} alt="User Signature" className="w-40 h-auto" />
               </div>
             </li>
@@ -160,11 +160,11 @@ export const ReportDisplay: React.FC<RegistrationStatusProps> = ({ submission, i
   }
 
   return (
-    <div className="text-center py-16 px-6 bg-slate-800/50 border-2 border-dashed border-slate-700 rounded-xl">
-      <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+    <div className="text-center py-16 px-6 bg-white dark:bg-slate-800/50 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl shadow-sm dark:shadow-none transition-colors duration-300">
+      <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
       </svg>
-      <h3 className="mt-4 text-lg font-medium text-slate-300">등록 대기 중</h3>
+      <h3 className="mt-4 text-lg font-medium text-slate-800 dark:text-slate-300">등록 대기 중</h3>
       <p className="mt-1 text-sm text-slate-500">
         위 양식에 인력 정보를 입력하고 모든 인증 절차를 완료해주세요.
       </p>

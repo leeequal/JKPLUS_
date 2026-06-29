@@ -129,10 +129,10 @@ const StepIndicator: React.FC<{ currentStep: number; stepNumber: number; label: 
   const isActive = currentStep >= stepNumber;
   return (
     <div className="flex items-center space-x-2">
-      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${isActive ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-400'}`}>
+      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${isActive ? 'bg-amber-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}`}>
         {stepNumber}
       </div>
-      <span className={`font-medium transition-colors duration-300 ${isActive ? 'text-slate-100' : 'text-slate-500'}`}>{label}</span>
+      <span className={`font-medium transition-colors duration-300 ${isActive ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500'}`}>{label}</span>
     </div>
   );
 };
@@ -164,6 +164,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
   const [hasSigned, setHasSigned] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawingRef = useRef(false);
+  const lastWidthRef = useRef<number>(0);
 
   const age = useMemo(() => calculateAge(formData.rrn), [formData.rrn]);
   const topLevelRegions = useMemo(() => Object.keys(KOREAN_AREAS).filter(k => !k.includes('_')), []);
@@ -500,19 +501,25 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
           const canvas = canvasRef.current;
           if (canvas) {
             const rect = canvas.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-                ctx.strokeStyle = '#FFFFFF';
-                ctx.lineWidth = 2.5;
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
+            // Only resize if the width has changed (to avoid clearing when the height changes slightly on mobile scroll)
+            if (Math.abs(lastWidthRef.current - rect.width) > 5) {
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+                lastWidthRef.current = rect.width;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.strokeStyle = '#FFFFFF';
+                    ctx.lineWidth = 2.5;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                }
+                setHasSigned(false);
             }
           }
         };
 
         if (step === 3) {
+            lastWidthRef.current = 0; // Reset width tracker to trigger resize on step change
             // Delay resize to ensure DOM is rendered
             setTimeout(resizeCanvas, 0);
             window.addEventListener('resize', resizeCanvas);
@@ -524,19 +531,19 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
     }, [step]);
     // --- End Signature Pad Logic ---
 
-  const commonInputClass = "w-full bg-slate-700/50 border border-slate-600 rounded-md px-3 py-2.5 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition disabled:bg-slate-800 disabled:cursor-not-allowed";
-  const fileInputBaseClass = "relative flex items-center justify-between w-full h-14 px-4 bg-slate-700/50 border-2 border-dashed rounded-md cursor-pointer hover:bg-slate-700 transition";
+  const commonInputClass = "w-full bg-white dark:bg-slate-700/50 border border-slate-250 dark:border-slate-600 rounded-md px-3 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:cursor-not-allowed shadow-inner";
+  const fileInputBaseClass = "relative flex items-center justify-between w-full h-14 px-4 bg-slate-50 dark:bg-slate-700/50 border-2 border-dashed rounded-md cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition duration-200";
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      <h2 className="text-2xl font-bold mb-2 text-slate-100">신규 인력 등록</h2>
-      <p className="text-slate-400 mb-6">인력의 정보를 정확하게 입력해주세요.</p>
+      <h2 className="text-2xl font-bold mb-2 text-slate-900 dark:text-slate-100">신규 인력 등록</h2>
+      <p className="text-slate-500 dark:text-slate-400 mb-6">인력의 정보를 정확하게 입력해주세요.</p>
       
-      <div className="flex justify-around items-center mb-8 p-3 bg-slate-900/50 rounded-lg">
+      <div className="flex justify-around items-center mb-8 p-3 bg-slate-100 dark:bg-slate-900/50 rounded-lg transition-colors duration-300">
           <StepIndicator currentStep={step} stepNumber={1} label="본인 인증" />
-          <div className={`flex-1 h-0.5 mx-4 transition-colors duration-500 ${step > 1 ? 'bg-amber-500' : 'bg-slate-700'}`}></div>
+          <div className={`flex-1 h-0.5 mx-4 transition-colors duration-500 ${step > 1 ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-700'}`}></div>
           <StepIndicator currentStep={step} stepNumber={2} label="서류 및 계좌" />
-          <div className={`flex-1 h-0.5 mx-4 transition-colors duration-500 ${step > 2 ? 'bg-amber-500' : 'bg-slate-700'}`}></div>
+          <div className={`flex-1 h-0.5 mx-4 transition-colors duration-500 ${step > 2 ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-700'}`}></div>
           <StepIndicator currentStep={step} stepNumber={3} label="개인정보 동의" />
       </div>
 
@@ -546,7 +553,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
               <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                 <div className="flex-shrink-0 flex flex-col items-center space-y-2">
                   <label htmlFor="profilePictureFile" className="cursor-pointer group">
-                    <div className="w-32 h-32 rounded-full bg-slate-700/50 border-2 border-dashed border-slate-600 flex items-center justify-center text-slate-500 group-hover:bg-slate-700 group-hover:border-amber-500 transition overflow-hidden relative">
+                    <div className="w-32 h-32 rounded-full bg-slate-50 dark:bg-slate-700/50 border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center text-slate-400 dark:text-slate-500 group-hover:bg-slate-100 dark:group-hover:bg-slate-700 group-hover:border-amber-500 transition overflow-hidden relative">
                       {profilePreviewUrl ? (
                         <img src={profilePreviewUrl} alt="Profile Preview" className="w-full h-full object-cover" />
                       ) : (
@@ -558,17 +565,17 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
                     </div>
                   </label>
                   <input type="file" id="profilePictureFile" onChange={(e) => handleFileSelect(e, 'profilePictureFile')} accept="image/*" className="hidden" />
-                  <label htmlFor="profilePictureFile" className="text-sm font-medium text-slate-300 cursor-pointer">프로필 사진</label>
-                  {errors.profilePictureFile && <p className="text-xs text-red-400">{errors.profilePictureFile}</p>}
+                  <label htmlFor="profilePictureFile" className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer">프로필 사진</label>
+                  {errors.profilePictureFile && <p className="text-xs text-red-500 dark:text-red-400">{errors.profilePictureFile}</p>}
                 </div>
                 <div className="w-full space-y-5">
                   <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-slate-300 mb-1">이름</label>
+                      <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">이름</label>
                       <input type="text" id="name" name="name" value={formData.name} onChange={handleInputChange} className={commonInputClass} placeholder="홍길동" required />
-                      {errors.name && <p className="mt-1 text-xs text-red-400">{errors.name}</p>}
+                      {errors.name && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.name}</p>}
                   </div>
                   <div>
-                    <label htmlFor="rrn" className="block text-sm font-medium text-slate-300 mb-1">주민등록번호 (외국인등록번호)</label>
+                    <label htmlFor="rrn" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">주민등록번호 (외국인등록번호)</label>
                     <div className="flex items-center gap-3">
                         <div className="flex-grow grid grid-cols-2 gap-3">
                           <input
@@ -582,17 +589,17 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
                             maxLength={14}
                             required
                           />
-                           <div className="h-12 flex items-center justify-center bg-slate-700/50 rounded-md text-slate-300 border border-slate-600 text-sm">
+                           <div className="h-12 flex items-center justify-center bg-slate-50 dark:bg-slate-700/50 rounded-md text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 text-sm font-medium">
                             {nationalityInfo.type === 'korean' && `내국인 (${formData.gender === 'male' ? '남' : '여'})`}
                             {nationalityInfo.type === 'foreign' && `외국인 (${formData.gender === 'male' ? '남' : '여'})`}
                             {!nationalityInfo.type && '구분 / 성별'}
                           </div>
                         </div>
-                       <div className="w-24 h-12 flex items-center justify-center bg-slate-700/50 rounded-md text-slate-300 border border-slate-600">
+                       <div className="w-24 h-12 flex items-center justify-center bg-slate-50 dark:bg-slate-700/50 rounded-md text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 font-medium">
                           {age !== null ? `만 ${age}세` : '만 나이'}
                        </div>
                     </div>
-                    {errors.rrn && <p className="mt-1 text-xs text-red-400">{errors.rrn}</p>}
+                    {errors.rrn && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.rrn}</p>}
                   </div>
                 </div>
               </div>
@@ -601,32 +608,32 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
                 <div className="animate-fadeIn space-y-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                      <label htmlFor="country" className="block text-sm font-medium text-slate-300 mb-1">국적</label>
+                      <label htmlFor="country" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">국적</label>
                       <select
                         id="country"
                         name="country"
                         value={nationalityInfo.country}
                         onChange={handleSelectChange}
-                        className={`${commonInputClass} ${nationalityInfo.country ? 'text-slate-100' : 'text-slate-500'}`}
+                        className={`${commonInputClass} ${nationalityInfo.country ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500'}`}
                       >
                         <option value="">국적 선택</option>
                         {NATIONALITIES.map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
-                      {errors.country && <p className="mt-1 text-xs text-red-400">{errors.country}</p>}
+                      {errors.country && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.country}</p>}
                     </div>
                      <div>
-                      <label htmlFor="visaType" className="block text-sm font-medium text-slate-300 mb-1">비자 종류</label>
+                      <label htmlFor="visaType" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">비자 종류</label>
                       <select
                         id="visaType"
                         name="visaType"
                         value={formData.visaType}
                         onChange={handleSelectChange}
-                        className={`${commonInputClass} ${formData.visaType ? 'text-slate-100' : 'text-slate-500'}`}
+                        className={`${commonInputClass} ${formData.visaType ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500'}`}
                       >
                         <option value="">비자 종류 선택</option>
                         {VISA_TYPES.map(v => <option key={v.code} value={`${v.code} (${v.name})`}>{`${v.code} (${v.name})`}</option>)}
                       </select>
-                      {errors.visaType && <p className="mt-1 text-xs text-red-400">{errors.visaType}</p>}
+                      {errors.visaType && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.visaType}</p>}
                     </div>
                   </div>
 
@@ -665,7 +672,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
               )}
               
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-slate-300 mb-1">연락처</label>
+                <label htmlFor="phone" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">연락처</label>
                 <input 
                     type="tel" 
                     id="phone" 
@@ -674,13 +681,13 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
                     className={commonInputClass}
                     readOnly
                 />
-                <p className="mt-2 text-sm text-green-400">✅ 로그인 시 인증된 번호입니다.</p>
-                {errors.phone && <p className="mt-1 text-xs text-red-400">{errors.phone}</p>}
+                <p className="mt-2 text-sm text-green-600 dark:text-green-400 font-medium">✅ 로그인 시 인증된 번호입니다.</p>
+                {errors.phone && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.phone}</p>}
               </div>
 
               <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">선호 근무 지역 (1개 이상 선택)</label>
-                  <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-700">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">선호 근무 지역 (1개 이상 선택)</label>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors duration-300">
                     <div className="flex flex-col sm:flex-row gap-3">
                       <select value={selectedRegion} onChange={handleRegionChange} className={commonInputClass}>
                         <option value="">시/도 선택</option>
@@ -710,7 +717,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
                                             type="button"
                                             key={district} 
                                             onClick={() => handleAreaToggle(fullAreaName)}
-                                            className={`w-full text-sm text-center px-2 py-2 rounded-md transition ${isSelected ? 'bg-amber-600 text-white font-semibold' : 'bg-slate-700 hover:bg-slate-600 text-slate-300'}`}
+                                            className={`w-full text-sm text-center px-2 py-2 rounded-md transition ${isSelected ? 'bg-amber-600 text-white font-semibold' : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300'}`}
                                           >
                                               {district}
                                           </button>
@@ -730,7 +737,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
                                         type="button"
                                         onClick={() => handleAreaToggle(fullAreaName)}
                                         disabled={isSelected}
-                                        className="w-full sm:w-auto text-sm px-4 py-2 rounded-md transition bg-slate-700 hover:bg-slate-600 text-slate-300 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed"
+                                        className="w-full sm:w-auto text-sm px-4 py-2 rounded-md transition bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 disabled:bg-slate-50 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 disabled:cursor-not-allowed border border-slate-200 dark:border-transparent"
                                     >
                                       {fullAreaName} {isSelected ? '(선택됨)' : '지역 추가'}
                                     </button>
@@ -743,13 +750,13 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
                     </div>
 
                     {formData.preferredAreas.length > 0 && (
-                      <div className="mt-4 pt-3 border-t border-slate-700">
-                          <p className="text-sm font-medium text-slate-400 mb-2">선택된 지역:</p>
+                      <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700">
+                          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">선택된 지역:</p>
                           <div className="flex flex-wrap gap-2">
                               {formData.preferredAreas.map(area => (
-                                <span key={area} className="inline-flex items-center gap-x-1.5 py-1 px-2.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-300">
+                                <span key={area} className="inline-flex items-center gap-x-1.5 py-1 px-2.5 rounded-full text-xs font-semibold bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300">
                                   {area}
-                                  <button type="button" onClick={() => handleAreaToggle(area)} className="text-amber-400 hover:text-white">
+                                  <button type="button" onClick={() => handleAreaToggle(area)} className="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-white">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
                                   </button>
                                 </span>
@@ -767,85 +774,85 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
           <div className="space-y-6">
             
             {/* Section 1: ID Card */}
-            <div className="bg-slate-900/50 p-5 rounded-xl border border-slate-700">
-              <h3 className="flex items-center text-lg font-semibold text-slate-200 mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <div className="bg-white dark:bg-slate-900/50 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-none transition-colors duration-300">
+              <h3 className="flex items-center text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                 </svg>
                 <span className="ml-2">1. 신분증 등록</span>
               </h3>
               <div>
-                <label htmlFor="idCardFile" className="block text-sm font-medium text-slate-300 mb-1">
+                <label htmlFor="idCardFile" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   {nationalityInfo.type === 'foreign' ? '외국인등록증 사본' : '신분증 사본'}
                 </label>
-                <label htmlFor="idCardFile" className={`${fileInputBaseClass} ${errors.idCardFile ? 'border-red-500' : 'border-slate-600'}`}>
-                  <span className={files.idCardFile ? 'text-green-400' : 'text-slate-400'}>{files.idCardFile ? `✅ ${files.idCardFile.name}` : '파일 선택'}</span>
-                  <div className="px-3 py-1 text-xs font-semibold text-slate-300 bg-slate-600 rounded-md">업로드</div>
+                <label htmlFor="idCardFile" className={`${fileInputBaseClass} ${errors.idCardFile ? 'border-red-500' : 'border-slate-300 dark:border-slate-600'}`}>
+                  <span className={files.idCardFile ? 'text-green-600 dark:text-green-400 font-medium' : 'text-slate-400'}>{files.idCardFile ? `✅ ${files.idCardFile.name}` : '파일 선택'}</span>
+                  <div className="px-3 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-600 rounded-md border border-slate-200 dark:border-transparent">업로드</div>
                 </label>
                 <input type="file" id="idCardFile" onChange={(e) => handleFileSelect(e, 'idCardFile')} accept="image/*" className="hidden" />
-                {errors.idCardFile && <p className="mt-1 text-xs text-red-400">{errors.idCardFile}</p>}
+                {errors.idCardFile && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.idCardFile}</p>}
               </div>
             </div>
 
             {/* Section 2: Safety Certificate */}
-            <div className="bg-slate-900/50 p-5 rounded-xl border border-slate-700">
-              <h3 className="flex items-center text-lg font-semibold text-slate-200 mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <div className="bg-white dark:bg-slate-900/50 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-none transition-colors duration-300">
+              <h3 className="flex items-center text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 20.944a11.955 11.955 0 0118-8.618c0-3.37-1.343-6.425-3.544-8.618z" />
                 </svg>
                 <span className="ml-2">2. 건설기초안전교육 이수증</span>
               </h3>
               <div>
-                <label htmlFor="safetyCertFile" className="block text-sm font-medium text-slate-300 mb-1">이수증 파일</label>
-                <label htmlFor="safetyCertFile" className={`${fileInputBaseClass} ${errors.safetyCertFile ? 'border-red-500' : 'border-slate-600'}`}>
-                  <span className={files.safetyCertFile ? 'text-green-400' : 'text-slate-400'}>{files.safetyCertFile ? `✅ ${files.safetyCertFile.name}` : '파일 선택'}</span>
-                  <div className="px-3 py-1 text-xs font-semibold text-slate-300 bg-slate-600 rounded-md">업로드</div>
+                <label htmlFor="safetyCertFile" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">이수증 파일</label>
+                <label htmlFor="safetyCertFile" className={`${fileInputBaseClass} ${errors.safetyCertFile ? 'border-red-500' : 'border-slate-300 dark:border-slate-600'}`}>
+                  <span className={files.safetyCertFile ? 'text-green-600 dark:text-green-400 font-medium' : 'text-slate-400'}>{files.safetyCertFile ? `✅ ${files.safetyCertFile.name}` : '파일 선택'}</span>
+                  <div className="px-3 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-600 rounded-md border border-slate-200 dark:border-transparent">업로드</div>
                 </label>
                 <input type="file" id="safetyCertFile" onChange={(e) => handleFileSelect(e, 'safetyCertFile')} accept="image/*" className="hidden" />
-                {errors.safetyCertFile && <p className="mt-1 text-xs text-red-400">{errors.safetyCertFile}</p>}
+                {errors.safetyCertFile && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.safetyCertFile}</p>}
               </div>
             </div>
 
             {/* Section 3: Bank Account Info */}
-            <div className="bg-slate-900/50 p-5 rounded-xl border border-slate-700">
-              <h3 className="flex items-center text-lg font-semibold text-slate-200 mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <div className="bg-white dark:bg-slate-900/50 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-none transition-colors duration-300">
+              <h3 className="flex items-center text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
                 <span className="ml-2">3. 급여 계좌 정보</span>
               </h3>
               <div className="space-y-5">
                 <div>
-                  <label htmlFor="bank" className="block text-sm font-medium text-slate-300 mb-1">금융 기관</label>
-                  <select id="bank" name="bank" value={formData.bank} onChange={handleSelectChange} className={`${commonInputClass} ${formData.bank ? 'text-slate-100' : 'text-slate-500'}`} required>
+                  <label htmlFor="bank" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">금융 기관</label>
+                  <select id="bank" name="bank" value={formData.bank} onChange={handleSelectChange} className={`${commonInputClass} ${formData.bank ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500'}`} required>
                       {FINANCIAL_INSTITUTIONS.map(bank => (
                           <option key={bank} value={bank === '은행/증권사 선택' ? '' : bank} disabled={bank === '은행/증권사 선택'}>
                               {bank}
                           </option>
                       ))}
                   </select>
-                  {errors.bank && <p className="mt-1 text-xs text-red-400">{errors.bank}</p>}
+                  {errors.bank && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.bank}</p>}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label htmlFor="accountNumber" className="block text-sm font-medium text-slate-300 mb-1">계좌번호</label>
+                    <label htmlFor="accountNumber" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">계좌번호</label>
                     <input type="text" id="accountNumber" name="accountNumber" value={formData.accountNumber} onChange={handleInputChange} className={commonInputClass} placeholder="'-' 없이 숫자만 입력" required />
-                    {errors.accountNumber && <p className="mt-1 text-xs text-red-400">{errors.accountNumber}</p>}
+                    {errors.accountNumber && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.accountNumber}</p>}
                   </div>
                   <div>
-                    <label htmlFor="accountHolder" className="block text-sm font-medium text-slate-300 mb-1">예금주명</label>
+                    <label htmlFor="accountHolder" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">예금주명</label>
                     <input type="text" id="accountHolder" name="accountHolder" value={formData.accountHolder} onChange={handleInputChange} className={commonInputClass} placeholder="계좌 예금주명" required />
-                    {errors.accountHolder && <p className="mt-1 text-xs text-red-400">{errors.accountHolder}</p>}
+                    {errors.accountHolder && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.accountHolder}</p>}
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="bankAccountFile" className="block text-sm font-medium text-slate-300 mb-1">통장 사본</label>
-                  <label htmlFor="bankAccountFile" className={`${fileInputBaseClass} ${errors.bankAccountFile ? 'border-red-500' : 'border-slate-600'}`}>
-                    <span className={files.bankAccountFile ? 'text-green-400' : 'text-slate-400'}>{files.bankAccountFile ? `✅ ${files.bankAccountFile.name}` : '파일 선택'}</span>
-                    <div className="px-3 py-1 text-xs font-semibold text-slate-300 bg-slate-600 rounded-md">업로드</div>
+                  <label htmlFor="bankAccountFile" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">통장 사본</label>
+                  <label htmlFor="bankAccountFile" className={`${fileInputBaseClass} ${errors.bankAccountFile ? 'border-red-500' : 'border-slate-300 dark:border-slate-600'}`}>
+                    <span className={files.bankAccountFile ? 'text-green-600 dark:text-green-400 font-medium' : 'text-slate-400'}>{files.bankAccountFile ? `✅ ${files.bankAccountFile.name}` : '파일 선택'}</span>
+                    <div className="px-3 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-600 rounded-md border border-slate-200 dark:border-transparent">업로드</div>
                   </label>
                   <input type="file" id="bankAccountFile" onChange={(e) => handleFileSelect(e, 'bankAccountFile')} accept="image/*" className="hidden" />
-                  {errors.bankAccountFile && <p className="mt-1 text-xs text-red-400">{errors.bankAccountFile}</p>}
+                  {errors.bankAccountFile && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.bankAccountFile}</p>}
                 </div>
               </div>
             </div>
@@ -853,18 +860,18 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
         </div>
 
         <div style={{ display: step === 3 ? 'block' : 'none' }} className="animate-fadeIn">
-          <div className="bg-slate-900/50 p-5 rounded-xl border border-slate-700">
-             <h3 className="flex items-center text-lg font-semibold text-slate-200 mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <div className="bg-white dark:bg-slate-900/50 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-none transition-colors duration-300">
+             <h3 className="flex items-center text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m0-6l-4 4-4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 20.944a11.955 11.955 0 0118-8.618c0-3.37-1.343-6.425-3.544-8.618z" />
                 </svg>
                 <span className="ml-2">3. 개인정보 수집 및 이용 동의</span>
               </h3>
               {/* Fix: Cast style object to React.CSSProperties to allow custom properties. */}
-              <div className="prose prose-sm prose-invert max-w-none bg-slate-800 border border-slate-600 rounded-md p-4 max-h-64 overflow-y-auto text-slate-300" style={{'--tw-prose-bold': '#e2e8f0', '--tw-prose-body': '#cbd5e1'} as React.CSSProperties}>
+              <div className="prose prose-sm dark:prose-invert max-w-none bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-md p-4 max-h-64 overflow-y-auto text-slate-700 dark:text-slate-300 transition-colors duration-300" style={{'--tw-prose-bold': '#334155', '--tw-prose-body': '#475569'} as React.CSSProperties}>
                   {AGREEMENT_TEXT.split('\n').map((line, index) => {
                       if (line.startsWith('**') && line.endsWith('**')) {
-                          return <h4 key={index} className="font-bold text-base mt-3 mb-1">{line.replace(/\*\*/g, '')}</h4>;
+                          return <h4 key={index} className="font-bold text-base mt-3 mb-1 text-slate-900 dark:text-white">{line.replace(/\*\*/g, '')}</h4>;
                       }
                        if (line.startsWith('- ')) {
                           return <p key={index} className="my-1 ml-2">{line}</p>;
@@ -887,18 +894,17 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
                             })
                           }
                       }}
-                      className="h-4 w-4 rounded border-slate-500 bg-slate-600 text-amber-500 focus:ring-amber-500"
+                      className="h-4 w-4 rounded border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-600 text-amber-500 focus:ring-amber-500"
                   />
-                  <label htmlFor="agreement" className="ml-2 text-sm font-medium text-slate-200">
+                  <label htmlFor="agreement" className="ml-2 text-sm font-medium text-slate-700 dark:text-slate-200">
                       위 개인정보 수집 및 이용 약관에 모두 동의합니다.
                   </label>
               </div>
-              {errors.agreement && <p className="mt-1 text-xs text-red-400">{errors.agreement}</p>}
+              {errors.agreement && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.agreement}</p>}
 
               <div className="mt-6">
-                <label className="block text-sm font-medium text-slate-300 mb-2">서명란</label>
-                <div className="relative aspect-[5/2] w-full rounded-md border-2 border-dashed bg-slate-800/50 hover:border-amber-500 transition-colors
-                    ${errors.signature ? 'border-red-500' : 'border-slate-600' }">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">서명란</label>
+                <div className={`relative aspect-[5/2] w-full rounded-md border-2 border-dashed bg-slate-50 dark:bg-slate-800/50 hover:border-amber-500 transition-colors ${errors.signature ? 'border-red-500' : 'border-slate-300 dark:border-slate-600'}`}>
                     <canvas
                         ref={canvasRef}
                         onMouseDown={startDrawing}
@@ -909,16 +915,17 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
                         onTouchMove={draw}
                         onTouchEnd={stopDrawing}
                         className="w-full h-full cursor-crosshair rounded-md"
+                        style={{ touchAction: 'none' }}
                     />
                     <button
                       type="button"
                       onClick={handleClearSignature}
-                      className="absolute top-2 right-2 px-3 py-1 text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-md"
+                      className="absolute top-2 right-2 px-3 py-1 text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-md border border-slate-200 dark:border-transparent"
                     >
                       초기화
                     </button>
                 </div>
-                 {errors.signature && <p className="mt-1 text-xs text-red-400">{errors.signature}</p>}
+                 {errors.signature && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.signature}</p>}
               </div>
           </div>
         </div>
@@ -928,7 +935,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
         {step === 1 ? (
           <div></div> // Placeholder for layout
         ) : (
-          <button type="button" onClick={handlePrevStep} className="px-6 py-3 text-sm font-medium bg-slate-600 hover:bg-slate-500 text-slate-200 rounded-md transition">
+          <button type="button" onClick={handlePrevStep} className="px-6 py-3 text-sm font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-600 dark:hover:bg-slate-500 text-slate-700 dark:text-slate-200 rounded-md transition border border-slate-200 dark:border-transparent shadow-sm">
             이전 단계
           </button>
         )}
@@ -938,7 +945,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
             다음 단계
           </button>
         ) : (
-          <button type="submit" disabled={isLoading} className="px-6 py-3 font-semibold bg-amber-600 hover:bg-amber-500 text-white rounded-md transition disabled:bg-slate-700 disabled:cursor-not-allowed flex items-center justify-center">
+          <button type="submit" disabled={isLoading} className="px-6 py-3 font-semibold bg-amber-600 hover:bg-amber-500 text-white rounded-md transition disabled:bg-slate-200 dark:disabled:bg-slate-700 disabled:text-slate-400 dark:disabled:text-slate-500 disabled:cursor-not-allowed flex items-center justify-center">
             {isLoading ? (
               <>
                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

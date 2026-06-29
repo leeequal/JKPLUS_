@@ -29,7 +29,7 @@ const MapLink: React.FC<{ href: string; children: React.ReactNode; serviceName: 
     target="_blank"
     rel="noopener noreferrer"
     aria-label={`${serviceName}에서 보기`}
-    className={`flex flex-col items-center justify-center gap-2 p-3 w-20 h-20 bg-slate-800 rounded-lg transition-transform transform hover:scale-105 hover:bg-slate-700 ${colorClasses}`}
+    className={`flex flex-col items-center justify-center gap-2 p-3 w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-lg transition-transform transform hover:scale-105 hover:bg-slate-200 dark:hover:bg-slate-700 ${colorClasses}`}
   >
     {children}
     <span className="text-xs font-semibold">{serviceName} 지도</span>
@@ -51,25 +51,25 @@ export const SiteMap: React.FC<{ site: Site }> = ({ site }) => {
 
 
   return (
-    <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700">
+    <div className="bg-white dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-none transition-colors duration-300">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-slate-200">지도 앱으로 길찾기</h3>
-        <p className="text-sm text-slate-400">아이콘을 선택하여 선호하는 지도 앱으로 현장 위치를 확인하세요.</p>
+        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">지도 앱으로 길찾기</h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400">아이콘을 선택하여 선호하는 지도 앱으로 현장 위치를 확인하세요.</p>
       </div>
 
       <div className="flex justify-center sm:justify-start flex-wrap gap-3 mb-6">
-        <MapLink href={naverMapUrl} serviceName="네이버" colorClasses="text-green-400 hover:text-green-300">
+        <MapLink href={naverMapUrl} serviceName="네이버" colorClasses="text-green-600 dark:text-green-400 hover:text-green-500 dark:hover:text-green-300">
           <NaverMapIcon className="w-8 h-8"/>
         </MapLink>
-        <MapLink href={kakaoMapUrl} serviceName="카카오" colorClasses="text-yellow-400 hover:text-yellow-300">
+        <MapLink href={kakaoMapUrl} serviceName="카카오" colorClasses="text-yellow-600 dark:text-yellow-400 hover:text-yellow-500 dark:hover:text-yellow-300">
           <KakaoMapIcon className="w-8 h-8"/>
         </MapLink>
-        <MapLink href={googleMapUrl} serviceName="구글" colorClasses="text-blue-400 hover:text-blue-300">
+        <MapLink href={googleMapUrl} serviceName="구글" colorClasses="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">
           <GoogleMapIcon className="w-8 h-8"/>
         </MapLink>
       </div>
 
-      <div className="relative w-full h-64 md:h-80 rounded-lg overflow-hidden border border-slate-600">
+      <div className="relative w-full h-64 md:h-80 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-600">
         <iframe
           title={`Map of ${name}`}
           className="w-full h-full border-0"

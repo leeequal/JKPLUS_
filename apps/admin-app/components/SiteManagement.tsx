@@ -61,13 +61,21 @@ const SiteFormModal: React.FC<{
     
     if (!isOpen) return null;
 
+    const formatPhoneNumber = (val: string): string => {
+        const cleaned = val.replace(/\D/g, '');
+        if (cleaned.length <= 3) return cleaned;
+        if (cleaned.length <= 7) return `${cleaned.slice(0, 3)}-${cleaned.slice(3)}`;
+        return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 7)}-${cleaned.slice(7, 11)}`;
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         if (name.startsWith('supervisor.')) {
             const field = name.split('.')[1];
+            const processedValue = field === 'phone' ? formatPhoneNumber(value) : value;
             setFormData(prev => ({ 
                 ...prev, 
-                supervisor: { ...prev.supervisor, [field]: value } 
+                supervisor: { ...prev.supervisor, [field]: processedValue } 
             }));
         } else {
             setFormData(prev => ({ ...prev, [name]: name === 'dailyRate' || name === 'totalSlots' ? Number(value) : value }));
@@ -191,8 +199,19 @@ export const SiteManagement: React.FC = () => {
     };
 
     const handleFormSubmit = (siteData: Site) => {
-        setSites(prev => [siteData as EmployerSite, ...prev]);
+        const newSite: EmployerSite = {
+            ...siteData,
+            status: 'approved',
+            ownerId: 'admin' // mark as admin created to save in employerSites
+        };
+        const updatedSites = [newSite, ...sites];
+        setSites(updatedSites);
+        
+        const employerSitesOnly = updatedSites.filter(s => s.ownerId); 
+        localStorage.setItem('employerSites', JSON.stringify(employerSitesOnly));
+        
         handleCloseModal();
+        alert('새 현장이 성공적으로 등록되었습니다.');
     };
 
     const handleApprove = (siteId: string) => {

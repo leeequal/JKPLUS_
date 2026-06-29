@@ -348,9 +348,261 @@ const JobRequestDetailModal: React.FC<{
     );
 };
 
+// Modal for Manual Job Request Registration (Telephone Booking)
+const ManualJobRequestModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    onSubmit: (newRequest: Omit<JobRequest, 'id' | 'assignedWorkerIds' | 'createdAt'>) => void;
+    sites: Site[];
+}> = ({ isOpen, onClose, onSubmit, sites }) => {
+    const [siteId, setSiteId] = useState('');
+    const [date, setDate] = useState('2024-08-05'); // default date consistent with MOCK_TODAY or tomorrow
+    const [workerCount, setWorkerCount] = useState(1);
+    const [dailyRate, setDailyRate] = useState(160000);
+    const [jobType, setJobType] = useState('보통인부');
+    const [notes, setNotes] = useState('');
+
+    useEffect(() => {
+        if (isOpen && sites.length > 0 && !siteId) {
+            setSiteId(sites[0].id);
+        }
+    }, [isOpen, sites, siteId]);
+
+    if (!isOpen) return null;
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!siteId) {
+            alert('현장을 선택해주세요.');
+            return;
+        }
+        onSubmit({
+            siteId,
+            date,
+            workerCount,
+            dailyRate,
+            jobType,
+            notes,
+            status: 'published' // Admin manually registers, so it goes straight to published/active status
+        });
+        // reset form
+        setNotes('');
+        setWorkerCount(1);
+    };
+
+    const commonInputClass = "w-full bg-slate-700 border border-slate-600 rounded-md px-3 py-2 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-amber-500 transition";
+    const labelClass = "block text-xs text-slate-400 mb-1 font-semibold";
+
+    const jobTypes = ['보통인부', '조공', '기공', '타설', '비계', '철근', '목수', '직접 입력'];
+
+    return (
+        <div className="fixed inset-0 bg-black/70 flex justify-center items-start pt-16 z-50 p-4" onClick={onClose}>
+            <div className="bg-slate-800 rounded-xl shadow-2xl w-full max-w-lg border border-slate-700 flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+                <form onSubmit={handleSubmit} className="flex flex-col h-full">
+                    <div className="p-6 border-b border-slate-700 shrink-0">
+                        <div className="flex items-center gap-2 text-indigo-400 mb-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                            </svg>
+                            <span className="text-xs font-bold uppercase tracking-wider">인력사무소 전화/수동 접수</span>
+                        </div>
+                        <h3 className="text-lg font-bold text-white">현장 구인 요청 직접 등록</h3>
+                        <p className="text-xs text-slate-400 mt-1">앱 사용이 어려운 구인자의 유선 요청을 시스템에 대리 등록합니다.</p>
+                    </div>
+
+                    <div className="p-6 space-y-4 overflow-y-auto">
+                        <div>
+                            <label className={labelClass}>현장 선택</label>
+                            <select 
+                                value={siteId} 
+                                onChange={e => setSiteId(e.target.value)} 
+                                className={commonInputClass}
+                                required
+                            >
+                                <option value="" disabled>현장을 선택하세요</option>
+                                {sites.map(s => (
+                                    <option key={s.id} value={s.id}>{s.name} ({s.location})</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className={labelClass}>출역 요청 일자</label>
+                                <input 
+                                    type="date" 
+                                    value={date} 
+                                    onChange={e => setDate(e.target.value)} 
+                                    className={commonInputClass}
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>모집 직종</label>
+                                {jobType !== '직접 입력' && !jobTypes.slice(0, -1).includes(jobType) ? (
+                                    <div className="flex gap-2">
+                                        <input 
+                                            type="text" 
+                                            value={jobType} 
+                                            onChange={e => setJobType(e.target.value)} 
+                                            className={commonInputClass}
+                                            placeholder="직종 직접 입력"
+                                        />
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setJobType('보통인부')} 
+                                            className="px-2 bg-slate-700 border border-slate-600 hover:bg-slate-600 rounded text-xs text-slate-300"
+                                        >
+                                            선택형
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <select 
+                                        value={jobType} 
+                                        onChange={e => setJobType(e.target.value)} 
+                                        className={commonInputClass}
+                                        required
+                                    >
+                                        {jobTypes.map(type => (
+                                            <option key={type} value={type}>{type}</option>
+                                        ))}
+                                    </select>
+                                )}
+                            </div>
+                        </div>
+
+                        {jobType === '직접 입력' && (
+                            <div>
+                                <label className={labelClass}>직종명 입력</label>
+                                <input 
+                                    type="text" 
+                                    placeholder="예: 타일공, 용접공 등" 
+                                    className={commonInputClass}
+                                    onChange={e => setJobType(e.target.value)}
+                                    required
+                                />
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className={labelClass}>요청 인원 (명)</label>
+                                <input 
+                                    type="number" 
+                                    min="1" 
+                                    value={workerCount} 
+                                    onChange={e => setWorkerCount(Number(e.target.value))} 
+                                    className={commonInputClass}
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>책정 일급 (원)</label>
+                                <input 
+                                    type="number" 
+                                    step="5000"
+                                    min="50000"
+                                    value={dailyRate} 
+                                    onChange={e => setDailyRate(Number(e.target.value))} 
+                                    className={commonInputClass}
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className={labelClass}>특이사항 및 작업 설명</label>
+                            <textarea 
+                                value={notes} 
+                                onChange={e => setNotes(e.target.value)} 
+                                placeholder="예: 신분증 지참, 06:40분까지 도착 요망" 
+                                className={commonInputClass} 
+                                rows={3}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3 p-4 bg-slate-800/50 rounded-b-xl border-t border-slate-700 shrink-0">
+                        <button type="button" onClick={onClose} className="px-4 py-2 text-slate-300 hover:text-white text-sm font-semibold">
+                            취소
+                        </button>
+                        <button type="submit" className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-bold shadow-lg shadow-indigo-600/10">
+                            대리 등록 완료
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+const DEFAULT_JOB_REQUESTS: JobRequest[] = [
+    {
+        id: 'job_seed_today_1',
+        siteId: 'site_req_sample_1',
+        date: '2024-08-05',
+        workerCount: 3,
+        dailyRate: 170000,
+        jobType: '조공',
+        notes: '자재 정리 및 청소 작업입니다.',
+        status: 'published',
+        assignedWorkerIds: ['01080000000', '01080000001'],
+        createdAt: '2024-08-04T09:00:00.000Z'
+    },
+    {
+        id: 'job_seed_today_2',
+        siteId: 'site_req_mock_0',
+        date: '2024-08-05',
+        workerCount: 2,
+        dailyRate: 160000,
+        jobType: '보통인부',
+        notes: '현장 정리 정돈, 초보 가능.',
+        status: 'published',
+        assignedWorkerIds: ['01080000002'],
+        createdAt: '2024-08-04T11:20:00.000Z'
+    },
+    {
+        id: 'job_seed_tomorrow_1',
+        siteId: 'site_req_sample_1',
+        date: '2024-08-06',
+        workerCount: 4,
+        dailyRate: 170000,
+        jobType: '조공',
+        notes: '내일 아침 일찍 자재 반입 예정입니다. 시간 엄수.',
+        status: 'published',
+        assignedWorkerIds: ['01080000000', '01080000001'],
+        createdAt: '2024-08-05T10:00:00.000Z'
+    },
+    {
+        id: 'job_seed_tomorrow_2',
+        siteId: 'site_req_mock_0',
+        date: '2024-08-06',
+        workerCount: 2,
+        dailyRate: 160000,
+        jobType: '보통인부',
+        notes: '실내 인테리어 철거 보조 및 자재 정리.',
+        status: 'published',
+        assignedWorkerIds: ['01080000002'],
+        createdAt: '2024-08-05T12:00:00.000Z'
+    },
+    {
+        id: 'manual_seed_tomorrow_3',
+        siteId: 'site_req_mock_1',
+        date: '2024-08-06',
+        workerCount: 3,
+        dailyRate: 220000,
+        jobType: '기공',
+        notes: '유선 전화 접수 건: 용접 기공 3명 구인 요청.',
+        status: 'published',
+        assignedWorkerIds: ['01080000003'],
+        createdAt: '2024-08-05T15:30:00.000Z'
+    }
+];
+
 export const DailyWorkManagement: React.FC = () => {
     const MOCK_TODAY = '2024-08-05';
-    const [activeTab, setActiveTab] = useState<'live' | 'recruitment' | 'history'>('live');
+    const MOCK_TOMORROW = '2024-08-06';
+    const [activeTab, setActiveTab] = useState<'live' | 'tomorrow' | 'recruitment' | 'history'>('live');
     const [jobRequests, setJobRequests] = useState<JobRequest[]>([]);
     const [sites, setSites] = useState<Site[]>([]);
     const [workHistory, setWorkHistory] = useState<WorkHistory[]>([]);
@@ -360,6 +612,7 @@ export const DailyWorkManagement: React.FC = () => {
     const [selectedRequest, setSelectedRequest] = useState<JobRequest | null>(null);
     const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+    const [isManualModalOpen, setIsManualModalOpen] = useState(false);
     
     // State for History Detail View
     const [viewingRequest, setViewingRequest] = useState<JobRequest | null>(null);
@@ -378,14 +631,33 @@ export const DailyWorkManagement: React.FC = () => {
         setWorkHistory(storedHistory ? JSON.parse(storedHistory) : WORK_HISTORY_DATA);
 
         const storedJobs = localStorage.getItem('jobRequests');
-        setJobRequests(storedJobs ? JSON.parse(storedJobs) : []);
+        if (storedJobs) {
+            setJobRequests(JSON.parse(storedJobs));
+        } else {
+            setJobRequests(DEFAULT_JOB_REQUESTS);
+            localStorage.setItem('jobRequests', JSON.stringify(DEFAULT_JOB_REQUESTS));
+        }
 
         const usersRaw = localStorage.getItem('registeredUsers');
         if (usersRaw) setUsers(JSON.parse(usersRaw));
     }, []);
 
-    const getSiteInfo = (siteId: string) => {
-        return sites.find(s => s.id === siteId) || { name: '알 수 없는 현장', id: siteId };
+    const getSiteInfo = (siteId: string): Site => {
+        const found = sites.find(s => s.id === siteId);
+        if (found) return found;
+        return {
+            id: siteId,
+            name: '알 수 없는 현장',
+            location: '미지정 주소',
+            description: '',
+            mapUrl: '',
+            supervisor: { name: '담당자 미지정', phone: '' },
+            dailyRate: 0,
+            totalSlots: 0,
+            filledSlots: 0,
+            coords: { lat: 37.5665, lng: 126.9780 },
+            confirmationDetails: { startTime: '07:00', onArrival: [], contactInfo: '', notes: '' }
+        };
     }
 
     // --- Recruitment Logic ---
@@ -501,6 +773,22 @@ export const DailyWorkManagement: React.FC = () => {
         });
     };
 
+    const handleManualJobRequestSubmit = (newReqData: Omit<JobRequest, 'id' | 'assignedWorkerIds' | 'createdAt'>) => {
+        const newRequest: JobRequest = {
+            ...newReqData,
+            id: `manual_${Date.now()}`,
+            assignedWorkerIds: [],
+            createdAt: new Date().toISOString()
+        };
+
+        const updatedJobs = [newRequest, ...jobRequests];
+        setJobRequests(updatedJobs);
+        localStorage.setItem('jobRequests', JSON.stringify(updatedJobs));
+
+        setIsManualModalOpen(false);
+        alert(`전화 접수 구인 요청이 정상적으로 대리 등록되었습니다!\n등록된 공고로 인근 근로자들을 직권 배정할 수 있습니다.`);
+    };
+
     const handleWorkerStatusChange = (workId: string, newStatus: WorkHistory['status']) => {
         const updatedHistory = workHistory.map(wh => wh.id === workId ? { ...wh, status: newStatus } : wh);
         setWorkHistory(updatedHistory);
@@ -527,26 +815,51 @@ export const DailyWorkManagement: React.FC = () => {
 
     return (
         <div className="animate-fadeIn">
-            <div className="mb-6 flex justify-between items-center">
+            <div className="mb-6">
                 <h2 className="text-2xl font-bold text-slate-100">일일 출역 관리</h2>
+                <p className="text-xs text-slate-400 mt-1">현장 출역 현황을 모니터링하고 인력 구인 및 배정을 직접 조율합니다.</p>
             </div>
 
-            <div className="flex space-x-1 bg-slate-800 p-1 rounded-lg w-fit mb-6">
+            <div className="flex flex-wrap gap-2 bg-slate-900/40 p-1.5 rounded-xl border border-slate-800 w-fit mb-6">
                 <button 
                     onClick={() => setActiveTab('live')}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition ${activeTab === 'live' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition flex items-center gap-1.5 ${activeTab === 'live' ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/10' : 'text-slate-400 hover:text-slate-200'}`}
                 >
-                    실시간 출역 현황
+                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                    실시간 출역 현황 (오늘)
                 </button>
+
+                {/* 현장별 모집 관리(직접등록) - Placed in-between and styled with emerald green */}
+                <button 
+                    onClick={() => setIsManualModalOpen(true)}
+                    className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-sm rounded-lg shadow-lg shadow-emerald-900/40 flex items-center gap-1.5 transition border border-emerald-500/30"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    현장별 모집 관리(직접등록)
+                </button>
+
                 <button 
                     onClick={() => setActiveTab('recruitment')}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition ${activeTab === 'recruitment' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition flex items-center gap-1 ${activeTab === 'recruitment' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/10' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                     현장별 모집 관리 (승인)
                 </button>
+
+                <button 
+                    onClick={() => setActiveTab('tomorrow')}
+                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition flex items-center gap-1.5 ${activeTab === 'tomorrow' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/10' : 'text-slate-400 hover:text-slate-200'}`}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    내일 출역 현황판 (내일)
+                </button>
+
                 <button 
                     onClick={() => setActiveTab('history')}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition ${activeTab === 'history' ? 'bg-slate-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition ${activeTab === 'history' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                     구인 요청 내역
                 </button>
@@ -595,6 +908,146 @@ export const DailyWorkManagement: React.FC = () => {
                     {getLiveStats().length === 0 && (
                         <div className="text-center py-12 text-slate-500 border border-dashed border-slate-700 rounded-xl">
                             오늘 예정된 출역 현장이 없습니다.
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Tab 4: Tomorrow's Workforce Board */}
+            {activeTab === 'tomorrow' && (
+                <div className="space-y-6">
+                    <div className="p-5 bg-blue-950/30 border border-blue-800/40 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <p className="text-sm font-bold text-blue-300 flex items-center gap-1.5">
+                                <span>📅 내일 ({MOCK_TOMORROW}) 전체 출역 상황판</span>
+                            </p>
+                            <p className="text-xs text-slate-400 mt-1">
+                                현장별 구인 신청(구인자 앱 등록 건) 및 수동 유선 직접 등록 건의 내역과 실시간 배정 현황을 점검합니다.
+                            </p>
+                        </div>
+                        <div className="flex gap-4 text-center text-xs shrink-0 bg-slate-900/60 p-3 rounded-lg border border-slate-800/60">
+                            <div>
+                                <div className="text-slate-500">총 현장수</div>
+                                <div className="text-sm font-bold text-slate-200">
+                                    {jobRequests.filter(req => req.date === MOCK_TOMORROW).length}개소
+                                </div>
+                            </div>
+                            <div className="border-l border-slate-800 pl-4">
+                                <div className="text-slate-500">총 모집인원</div>
+                                <div className="text-sm font-bold text-slate-200">
+                                    {jobRequests.filter(req => req.date === MOCK_TOMORROW).reduce((acc, curr) => acc + curr.workerCount, 0)}명
+                                </div>
+                            </div>
+                            <div className="border-l border-slate-800 pl-4">
+                                <div className="text-slate-500">현재 배정인원</div>
+                                <div className="text-sm font-bold text-blue-400 animate-pulse">
+                                    {jobRequests.filter(req => req.date === MOCK_TOMORROW).reduce((acc, curr) => acc + curr.assignedWorkerIds.length, 0)}명
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                        {jobRequests.filter(req => req.date === MOCK_TOMORROW).map(job => {
+                            const isManual = job.id.startsWith('manual');
+                            const site = getSiteInfo(job.siteId);
+                            const assignedPercent = job.workerCount > 0 ? (job.assignedWorkerIds.length / job.workerCount) * 100 : 0;
+                            
+                            return (
+                                <div key={job.id} className="bg-slate-800/90 rounded-xl border border-slate-700/80 p-5 flex flex-col justify-between hover:border-blue-500 transition shadow-lg group">
+                                    <div>
+                                        <div className="flex items-start justify-between gap-2 mb-3.5">
+                                            <div>
+                                                <h4 className="font-bold text-white text-lg group-hover:text-blue-400 transition-colors truncate max-w-[240px]">{site.name}</h4>
+                                                <span className="text-[11px] text-slate-500">{site.location}</span>
+                                            </div>
+                                            {isManual ? (
+                                                <span className="shrink-0 text-[10px] bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 font-semibold px-2 py-1 rounded-md flex items-center gap-1">
+                                                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
+                                                    지정 등록 (전화 접수)
+                                                </span>
+                                            ) : (
+                                                <span className="shrink-0 text-[10px] bg-indigo-950/80 text-indigo-400 border border-indigo-800/60 font-semibold px-2 py-1 rounded-md flex items-center gap-1">
+                                                    <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse"></span>
+                                                    구인자 앱 신청
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <div className="space-y-2 text-sm text-slate-300 bg-slate-900/50 p-3 rounded-lg border border-slate-800/40 mb-4">
+                                            <div className="flex justify-between">
+                                                <span className="text-slate-500 text-xs">요청 구직</span>
+                                                <span className="font-semibold text-slate-200">{job.jobType}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-slate-500 text-xs">지정 단가</span>
+                                                <span className="font-mono text-amber-400 text-xs font-semibold">{job.dailyRate.toLocaleString()} 원</span>
+                                            </div>
+                                            <div className="flex justify-between items-start">
+                                                <span className="text-slate-500 text-xs shrink-0 mr-4">전달/특이사항</span>
+                                                <span className="text-slate-400 text-xs text-right break-words">{job.notes || '전달 사항 없음'}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="mb-4 bg-slate-900/20 p-2.5 rounded-lg border border-slate-700/30">
+                                            <div className="flex justify-between items-center text-xs text-slate-400 mb-2">
+                                                <span>배정 달성 현황</span>
+                                                <span className="font-bold text-slate-200 font-mono">
+                                                    {job.assignedWorkerIds.length} / {job.workerCount} 명 ({Math.round(assignedPercent)}%)
+                                                </span>
+                                            </div>
+                                            <div className="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
+                                                <div 
+                                                    className={`h-full rounded-full transition-all duration-500 ${assignedPercent === 100 ? 'bg-blue-500' : 'bg-amber-500'}`} 
+                                                    style={{ width: `${assignedPercent}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+
+                                        {/* Assigned Workers list */}
+                                        <div className="space-y-2">
+                                            <div className="text-xs font-bold text-slate-400 flex items-center gap-1">
+                                                <span>👥 배정 근로자 리스트</span>
+                                            </div>
+                                            {job.assignedWorkerIds.length === 0 ? (
+                                                <div className="text-xs text-slate-500 italic py-2 bg-slate-900/10 rounded border border-dashed border-slate-800 text-center">
+                                                    아직 배정된 근로자가 없습니다. 아래 버튼으로 직권 배정할 수 있습니다.
+                                                </div>
+                                            ) : (
+                                                <div className="grid grid-cols-2 gap-1.5">
+                                                    {job.assignedWorkerIds.map(phone => {
+                                                        const name = users.find(u => u.phone === phone)?.name || '알수없음';
+                                                        return (
+                                                            <div key={phone} className="text-xs bg-slate-900/60 hover:bg-slate-900 text-slate-200 px-2.5 py-1.5 rounded-lg border border-slate-700/50 flex items-center justify-between gap-1">
+                                                                <span className="font-semibold">{name}</span>
+                                                                <span className="text-[10px] text-slate-500 font-mono">{formatPhoneNumber(phone)}</span>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-5 pt-4 border-t border-slate-700/60 flex justify-end">
+                                        <button 
+                                            onClick={() => setViewingRequest(job)}
+                                            className="px-3.5 py-2 bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 border border-indigo-500/30 shadow-md"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                            </svg>
+                                            인력 직권 배정관리
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {jobRequests.filter(req => req.date === MOCK_TOMORROW).length === 0 && (
+                        <div className="text-center py-16 text-slate-500 border border-dashed border-slate-700 rounded-xl">
+                            내일 예정된 출역 현장 및 구인 공고가 없습니다.
                         </div>
                     )}
                 </div>
@@ -692,6 +1145,12 @@ export const DailyWorkManagement: React.FC = () => {
                     onApproveWorker={(user) => handleApproveWorker(viewingRequest, user)}
                 />
             )}
+            <ManualJobRequestModal 
+                isOpen={isManualModalOpen}
+                onClose={() => setIsManualModalOpen(false)}
+                onSubmit={handleManualJobRequestSubmit}
+                sites={sites}
+            />
         </div>
     );
 };
