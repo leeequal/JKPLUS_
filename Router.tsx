@@ -9,6 +9,14 @@ const Router: React.FC = () => {
 
     useEffect(() => {
         try {
+            // ⚠️ SECURITY: Test data only in development mode
+            const isDevelopment = process.env.NODE_ENV === 'development';
+            
+            if (!isDevelopment) {
+                console.warn('⚠️ Production mode detected. Test data seeding disabled.');
+                return;
+            }
+
             // --- SEED WORKERS (USERS) ---
             const registeredUsersRaw = localStorage.getItem('registeredUsers');
             let currentUsers = registeredUsersRaw ? JSON.parse(registeredUsersRaw) : [];
@@ -21,22 +29,14 @@ const Router: React.FC = () => {
                 // 1. Ensure Default Test User
                 if (!currentUsers.find((u: any) => u.phone === TEST_USER_PHONE)) {
                     currentUsers.push({ phone: TEST_USER_PHONE, name: '김테스트' });
+                    // ⚠️ SECURITY: Store ONLY safe data locally
+                    // PII (RRN, account numbers, signatures) MUST be stored on server
                     currentProfiles[TEST_USER_PHONE] = {
                         name: '김테스트',
-                        rrn: '900101-1234567',
-                        gender: 'male',
-                        nationality: 'korean',
                         phone: TEST_USER_PHONE,
-                        preferredAreas: ['서울 강남구'],
-                        bank: 'KB국민은행',
-                        accountNumber: '111-222-333444',
-                        accountHolder: '김테스트',
-                        signatureDataUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 
-                        bankAccountFileName: '통장사본.jpg',
-                        idCardFileName: '신분증.jpg',
-                        safetyCertFileName: '이수증.jpg',
-                        profilePictureFileName: '프로필사진.jpg',
+                        // ❌ REMOVED: rrn, accountNumber, signatureDataUrl (PII)
                         registrationDate: '2024-07-20T09:00:00.000Z',
+                        // NOTE: In production, fetch full profile from secure server API
                     };
                 }
 
@@ -47,26 +47,14 @@ const Router: React.FC = () => {
                 WORKER_NAMES.forEach((name, index) => {
                     const phone = `0108000${String(index).padStart(4, '0')}`;
                     if (!currentUsers.find((u: any) => u.phone === phone)) {
-                        const isMale = index % 2 === 0;
-                        const birthYear = 80 + index; 
-                        const genderDigit = isMale ? '1' : '2';
-                        
                         currentUsers.push({ phone, name });
+                        // ⚠️ SECURITY: Store only safe identifiers
                         currentProfiles[phone] = {
                             name,
-                            rrn: `${birthYear}0101-${genderDigit}******`,
-                            gender: isMale ? 'male' : 'female',
-                            nationality: 'korean',
                             phone,
-                            preferredAreas: [AREAS[index % AREAS.length]],
-                            bank: '신한은행',
-                            accountNumber: `110-${index}${index}${index}-123456`,
-                            accountHolder: name,
-                            signatureDataUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
-                            bankAccountFileName: 'sample_bank.jpg',
-                            idCardFileName: 'sample_id.jpg',
-                            safetyCertFileName: 'sample_cert.jpg',
                             registrationDate: `2024-08-${String(index + 1).padStart(2, '0')}T10:${String(index*5).padStart(2,'0')}:00.000Z`,
+                            // ❌ REMOVED: rrn, accountNumber, bankAccountFileName, idCardFileName, etc.
+                            // NOTE: These sensitive files must be stored on encrypted server
                         };
                     }
                 });
@@ -90,9 +78,9 @@ const Router: React.FC = () => {
                 }
 
                 const EMPLOYER_NAMES = ['김대표', '이팀장', '최부장', '정소장', '강실장', '조반장', '윤이사', '장사장', '임전무', '한상무'];
-                const COMPANIES = ['대박건설', '미래건축', '성실인테리어', '제일설비', '하늘공영', '바른시공', '태양전기', '푸른조경', '한마음종합', '우리디자인'];
-                const SITES_NAMES = ['강남 오피스텔', '판교 IT센터', '분당 아파트', '성수동 카페', '홍대 리모델링', '부산 해운대 호텔', '대구 복합단지', '광주 아파트', '대전 연구소', '인천 물류센터'];
-                const SITE_LOCATIONS = ['서울 강남구', '경기 성남시', '경기 성남시', '서울 성동구', '서울 마포구', '부산 해운대구', '대구 수성구', '광주 서구', '대전 유성구', '인천 중구'];
+                const COMPANIES = ['대박건설', '미래건축', '성실인테리어', '제일설비', '하늘공영', '바른시공', '태양전기', '푸른조경', '한마음종합', '우리건설'];
+                const SITES_NAMES = ['강남 오피스텔', '판교 IT센터', '분당 아파트', '성수동 카페', '홍대 리모델링', '부산 해운대 호텔', '대구 복합단지', '광주 대화'];
+                const SITE_LOCATIONS = ['서울 강남구', '경기 성남시', '경기 성남시', '서울 성동구', '서울 마포구', '부산 해운대구', '대구 수성구', '광주 서구'];
 
                 const newSites: any[] = [];
                 const existingSitesRaw = localStorage.getItem('employerSites');
@@ -191,7 +179,7 @@ const Router: React.FC = () => {
                 <div className="text-center mb-12">
                     <div className="inline-flex items-center justify-center p-4 bg-gradient-to-tr from-amber-500 to-orange-600 rounded-2xl shadow-lg mb-6">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5h1.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293h3.172a1 1 0 00.707-.293l2.414-2.414a1 1 0 01.707-.293H21" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5h1.586a1 1 0 01.707.293l.707.707a1 1 0 00.707.293h1.586v5h-1.586a1 1 0 01-.707-.293l-.707-.707a1 1 0 00-.707-.293H9v5z" />
                         </svg>
                     </div>
                     <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 tracking-tight">건설 인력 매칭 플랫폼</h1>
@@ -205,7 +193,7 @@ const Router: React.FC = () => {
                     {/* User App Card */}
                     <button 
                         onClick={() => setView('user')}
-                        className="group relative bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-amber-500 rounded-2xl p-8 text-left transition-all duration-300 hover:shadow-xl hover:shadow-amber-500/10 flex flex-col h-full"
+                        className="group relative bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-amber-500 rounded-2xl p-8 text-left transition-all duration-300 hover:shadow-lg"
                     >
                         <div className="mb-6 inline-block p-3 bg-slate-900 rounded-xl group-hover:scale-110 transition-transform duration-300">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -228,11 +216,11 @@ const Router: React.FC = () => {
                     {/* Employer App Card */}
                     <button 
                         onClick={() => setView('employer')}
-                        className="group relative bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-indigo-500 rounded-2xl p-8 text-left transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10 flex flex-col h-full"
+                        className="group relative bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-indigo-500 rounded-2xl p-8 text-left transition-all duration-300 hover:shadow-lg"
                     >
                         <div className="mb-6 inline-block p-3 bg-slate-900 rounded-xl group-hover:scale-110 transition-transform duration-300">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5h1.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293h3.172a1 1 0 00.707-.293l2.414-2.414a1 1 0 01.707-.293H21" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5h1.586a1 1 0 01.707.293l.707.707a1 1 0 00.707.293h1.586v5h-1.586a1 1 0 01-.707-.293l-.707-.707a1 1 0 00-.707-.293H9v5z" />
                             </svg>
                         </div>
                         <h2 className="text-2xl font-bold text-white mb-2 group-hover:text-indigo-400 transition-colors">구인자용 앱</h2>
@@ -251,7 +239,7 @@ const Router: React.FC = () => {
                     {/* Admin App Card */}
                     <button 
                         onClick={() => setView('admin')}
-                        className="group relative bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-sky-500 rounded-2xl p-8 text-left transition-all duration-300 hover:shadow-xl hover:shadow-sky-500/10 flex flex-col h-full"
+                        className="group relative bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-sky-500 rounded-2xl p-8 text-left transition-all duration-300 hover:shadow-lg"
                     >
                         <div className="mb-6 inline-block p-3 bg-slate-900 rounded-xl group-hover:scale-110 transition-transform duration-300">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
