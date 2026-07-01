@@ -13,6 +13,7 @@ const Router: React.FC = () => {
     const [isCreatingDoc, setIsCreatingDoc] = useState(false);
     const [createdDocId, setCreatedDocId] = useState<string | null>(null);
     const [docError, setDocError] = useState<string | null>(null);
+    const [landingStyle, setLandingStyle] = useState<'classic' | 'glass' | 'bold'>('classic');
 
     useEffect(() => {
         const unsubscribe = initDocsAuth(
@@ -246,14 +247,60 @@ const Router: React.FC = () => {
         );
     }
 
+    const stylePreset = {
+        classic: {
+            root: 'bg-slate-950 text-slate-300',
+            glowA: 'bg-amber-500/5',
+            glowB: 'bg-indigo-500/5',
+            card: 'bg-slate-900/50 hover:bg-slate-900 border-slate-800/80',
+            docs: 'bg-slate-900/40 border-slate-800',
+        },
+        glass: {
+            root: 'bg-slate-950 text-slate-200',
+            glowA: 'bg-cyan-500/10',
+            glowB: 'bg-fuchsia-500/10',
+            card: 'bg-white/5 hover:bg-white/10 border-white/15 backdrop-blur-xl',
+            docs: 'bg-white/5 border-white/15 backdrop-blur-xl',
+        },
+        bold: {
+            root: 'bg-black text-slate-100',
+            glowA: 'bg-orange-500/10',
+            glowB: 'bg-sky-500/10',
+            card: 'bg-slate-900 hover:bg-slate-800 border-slate-700',
+            docs: 'bg-slate-900 border-slate-700',
+        },
+    } as const;
+
+    const activeStyle = stylePreset[landingStyle];
+
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-300 flex items-center justify-center p-4 sm:p-6 font-sans relative overflow-hidden">
+        <div className={`min-h-screen ${activeStyle.root} flex items-center justify-center p-4 sm:p-6 font-sans relative overflow-hidden`}>
             {/* Subtle premium background glow effects */}
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-amber-500/5 blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none" />
+            <div className={`absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full ${activeStyle.glowA} blur-[120px] pointer-events-none`} />
+            <div className={`absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full ${activeStyle.glowB} blur-[120px] pointer-events-none`} />
 
             <div className="max-w-6xl w-full animate-fadeIn relative z-10">
                 <div className="text-center mb-14">
+                    <div className="mb-5 flex items-center justify-center gap-2">
+                        <button
+                            onClick={() => setLandingStyle('classic')}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold border transition ${landingStyle === 'classic' ? 'bg-amber-500/20 text-amber-300 border-amber-400/40' : 'bg-slate-900/40 text-slate-400 border-slate-700 hover:text-slate-200'}`}
+                        >
+                            Classic
+                        </button>
+                        <button
+                            onClick={() => setLandingStyle('glass')}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold border transition ${landingStyle === 'glass' ? 'bg-cyan-500/20 text-cyan-200 border-cyan-300/40' : 'bg-slate-900/40 text-slate-400 border-slate-700 hover:text-slate-200'}`}
+                        >
+                            Glass
+                        </button>
+                        <button
+                            onClick={() => setLandingStyle('bold')}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold border transition ${landingStyle === 'bold' ? 'bg-sky-500/20 text-sky-200 border-sky-300/40' : 'bg-slate-900/40 text-slate-400 border-slate-700 hover:text-slate-200'}`}
+                        >
+                            Bold
+                        </button>
+                    </div>
                     <div className="inline-flex items-center justify-center p-4 bg-gradient-to-tr from-amber-500 via-orange-500 to-indigo-600 rounded-3xl shadow-xl shadow-orange-500/10 mb-6 border border-white/10">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5h1.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293h3.172a1 1 0 00.707-.293l2.414-2.414a1 1 0 01.707-.293H21" />
@@ -272,7 +319,7 @@ const Router: React.FC = () => {
                     {/* User App Card */}
                     <button 
                         onClick={() => setView('user')}
-                        className="group relative bg-slate-900/50 hover:bg-slate-900 backdrop-blur-sm border border-slate-800/80 hover:border-amber-500/40 rounded-3xl p-8 text-left transition-all duration-300 hover:shadow-2xl hover:shadow-amber-500/5 flex flex-col h-full overflow-hidden"
+                        className={`group relative ${activeStyle.card} hover:border-amber-500/40 rounded-3xl p-8 text-left transition-all duration-300 hover:shadow-2xl hover:shadow-amber-500/5 flex flex-col h-full overflow-hidden`}
                     >
                         <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition-all duration-300" />
                         <div className="mb-6 inline-block p-3.5 bg-slate-850 border border-slate-800 rounded-2xl group-hover:scale-110 group-hover:border-amber-500/20 transition-all duration-300">
@@ -297,7 +344,7 @@ const Router: React.FC = () => {
                     {/* Employer App Card */}
                     <button 
                         onClick={() => setView('employer')}
-                        className="group relative bg-slate-900/50 hover:bg-slate-900 backdrop-blur-sm border border-slate-800/80 hover:border-indigo-500/40 rounded-3xl p-8 text-left transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/5 flex flex-col h-full overflow-hidden"
+                        className={`group relative ${activeStyle.card} hover:border-indigo-500/40 rounded-3xl p-8 text-left transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/5 flex flex-col h-full overflow-hidden`}
                     >
                         <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-2xl group-hover:bg-indigo-500/10 transition-all duration-300" />
                         <div className="mb-6 inline-block p-3.5 bg-slate-850 border border-slate-800 rounded-2xl group-hover:scale-110 group-hover:border-indigo-500/20 transition-all duration-300">
@@ -322,7 +369,7 @@ const Router: React.FC = () => {
                     {/* Admin App Card */}
                     <button 
                         onClick={() => setView('admin')}
-                        className="group relative bg-slate-900/50 hover:bg-slate-900 backdrop-blur-sm border border-slate-800/80 hover:border-sky-500/40 rounded-3xl p-8 text-left transition-all duration-300 hover:shadow-2xl hover:shadow-sky-500/5 flex flex-col h-full overflow-hidden"
+                        className={`group relative ${activeStyle.card} hover:border-sky-500/40 rounded-3xl p-8 text-left transition-all duration-300 hover:shadow-2xl hover:shadow-sky-500/5 flex flex-col h-full overflow-hidden`}
                     >
                         <div className="absolute top-0 right-0 w-24 h-24 bg-sky-500/5 rounded-full blur-2xl group-hover:bg-sky-500/10 transition-all duration-300" />
                         <div className="mb-6 inline-block p-3.5 bg-slate-850 border border-slate-800 rounded-2xl group-hover:scale-110 group-hover:border-sky-500/20 transition-all duration-300">
@@ -345,7 +392,7 @@ const Router: React.FC = () => {
                 </div>
  
                 {/* Google Docs 상세 구현 설명서 내보내기 카드 */}
-                <div className="mt-14 max-w-5xl mx-auto bg-slate-900/40 backdrop-blur-md border border-slate-800 rounded-3xl p-6 md:p-8 transition-all duration-300 shadow-xl relative overflow-hidden">
+                <div className={`mt-14 max-w-5xl mx-auto ${activeStyle.docs} rounded-3xl p-6 md:p-8 transition-all duration-300 shadow-xl relative overflow-hidden`}>
                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                         <div className="flex items-start space-x-4">
                             <div className="p-3 bg-indigo-900/40 rounded-xl text-indigo-400 mt-1">
