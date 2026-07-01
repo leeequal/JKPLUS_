@@ -928,6 +928,37 @@ const formatNewsDate = (value?: string) => {
     return parsed.toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 };
 
+const formatRelativeTime = (value?: string) => {
+    if (!value) return '';
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return '';
+    const diffMs = Date.now() - parsed.getTime();
+    const diffMin = Math.max(1, Math.floor(diffMs / 60000));
+    if (diffMin < 60) return `${diffMin}분 전`;
+    const diffHour = Math.floor(diffMin / 60);
+    if (diffHour < 24) return `${diffHour}시간 전`;
+    const diffDay = Math.floor(diffHour / 24);
+    return `${diffDay}일 전`;
+};
+
+const getNewsTag = (title: string) => {
+    if (title.includes('안전') || title.includes('사고') || title.includes('재해')) return '안전';
+    if (title.includes('채용') || title.includes('인력') || title.includes('구인')) return '채용';
+    if (title.includes('정책') || title.includes('국토부') || title.includes('규제')) return '정책';
+    return '건설';
+};
+
+const getNewsPriority = (title: string) => {
+    if (title.includes('사고') || title.includes('경보') || title.includes('폭염') || title.includes('호우')) return 3;
+    if (title.includes('안전') || title.includes('채용') || title.includes('수급')) return 2;
+    return 1;
+};
+
+const getSnippet = (description?: string) => {
+    const stripped = stripHtml(description);
+    return stripped.length > 110 ? `${stripped.slice(0, 110)}...` : stripped;
+};
+
 export const GameCenter: React.FC = () => {
     const [activeGameId, setActiveGameId] = useState<string | null>(null);
     const [news, setNews] = useState<LoungeNewsItem[]>(FALLBACK_NEWS);
@@ -936,6 +967,7 @@ export const GameCenter: React.FC = () => {
     const [activeNewsCategory, setActiveNewsCategory] = useState<NewsCategoryId>('construction');
     const [selectedNews, setSelectedNews] = useState<LoungeNewsItem | null>(null);
     const [showWebPreview, setShowWebPreview] = useState(false);
+    const [isGameListExpanded, setIsGameListExpanded] = useState(false);
 
     const GAMES: GameItem[] = [
         {
@@ -1000,7 +1032,14 @@ export const GameCenter: React.FC = () => {
                     : [];
 
                 if (isMounted && items.length > 0) {
-                    setNews(items);
+                    const sorted = [...items].sort((a, b) => {
+                        const priorityDiff = getNewsPriority(b.title) - getNewsPriority(a.title);
+                        if (priorityDiff !== 0) return priorityDiff;
+                        const aTime = a.pubDate ? new Date(a.pubDate).getTime() : 0;
+                        const bTime = b.pubDate ? new Date(b.pubDate).getTime() : 0;
+                        return bTime - aTime;
+                    });
+                    setNews(sorted);
                     setNewsError(null);
                 } else if (isMounted) {
                     setNewsError('실시간 뉴스가 없어 기본 소식을 표시합니다.');
@@ -1057,6 +1096,28 @@ export const GameCenter: React.FC = () => {
                 </div>
                 {isNewsLoading && <p className="text-xs text-slate-400 mb-2">불러오는 중...</p>}
                 {newsError && <p className="text-xs text-amber-400 mb-2">{newsError}</p>}
+                <div className="mb-3">
+                    <p className="text-xs font-bold text-slate-300 mb-2">오늘의 핵심 3건</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        {news.slice(0, 3).map((item, index) => (
+                            <button
+                                key={`${item.link}-top-${index}`}
+                                onClick={() => {
+                                    setSelectedNews(item);
+                                    setShowWebPreview(false);
+                                }}
+                                className="text-left p-3 rounded-lg bg-slate-900 border border-slate-700 hover:border-amber-500/50 transition"
+                            >
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300">{getNewsTag(item.title)}</span>
+                                    <span className="text-[10px] text-slate-500">{formatRelativeTime(item.pubDate)}</span>
+                                </div>
+                                <p className="text-sm font-semibold text-slate-100 leading-snug">{item.title}</p>
+                                <p className="text-[11px] text-slate-400 mt-1">{getSnippet(item.description)}</p>
+                            </button>
+                        ))}
+                    </div>
+                </div>
                 <ul className="space-y-2">
                     {news.map((item, index) => (
                         <li key={`${item.link}-${index}`}>
@@ -1067,41 +1128,53 @@ export const GameCenter: React.FC = () => {
                                 }}
                                 className="w-full text-left p-3 rounded-lg bg-slate-900/60 border border-slate-700 hover:border-amber-500/50 transition"
                             >
-                                <p className="text-sm text-slate-200 hover:text-amber-300 transition-colors">{item.title}</p>
-                                <p className="text-[11px] text-slate-500 mt-1">{item.source || '주요 뉴스'} {formatNewsDate(item.pubDate) ? `· ${formatNewsDate(item.pubDate)}` : ''}</p>
-                            </button>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-slate-700 text-slate-200">{getNewsTag(item.title)}</span>
+                                        <span className="text-[10px] text-slate-500">{formatRelativeTime(item.pubDate)}</span>
+                                    </div>
+                                    <p className="text-sm text-slate-200 hover:text-amber-300 transition-colors">{item.title}</p>
+                                    <p className="text-[11px] text-slate-500 mt-1">{item.source || '주요 뉴스'} {formatNewsDate(item.pubDate) ? `· ${formatNewsDate(item.pubDate)}` : ''}</p>
+                                </button>
                         </li>
                     ))}
                 </ul>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {GAMES.map(game => (
-                    <button
-                        key={game.id}
-                        onClick={() => setActiveGameId(game.id)}
-                        className="flex items-start p-5 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 hover:border-amber-500 rounded-xl text-left transition-all group"
-                    >
-                        <div className="p-3 bg-slate-900 rounded-lg mr-4 group-hover:scale-110 transition-transform">
-                            {game.icon}
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-bold text-slate-200 group-hover:text-amber-400 transition-colors">
-                                {game.title}
-                            </h3>
-                            <p className="text-sm text-slate-400 mt-1 leading-relaxed">
-                                {game.description}
-                            </p>
-                        </div>
-                    </button>
-                ))}
-                
-                <div className="flex items-center justify-center p-5 bg-slate-800/30 border border-slate-700/50 rounded-xl border-dashed">
-                    <div className="text-center text-slate-500">
-                        <span className="text-2xl block mb-2">🚧</span>
-                        <p className="text-sm font-medium">새로운 게임 준비 중...</p>
+            <div className="bg-slate-800/30 border border-slate-700/60 rounded-xl p-4">
+                <button
+                    onClick={() => setIsGameListExpanded(prev => !prev)}
+                    className="w-full flex items-center justify-between text-left"
+                >
+                    <div>
+                        <p className="text-sm font-bold text-slate-200">🎮 휴게실 게임</p>
+                        <p className="text-xs text-slate-500 mt-0.5">뉴스 확인 후 짧게 즐길 수 있도록 접어두었습니다.</p>
                     </div>
-                </div>
+                    <span className="text-xs font-bold text-amber-300">{isGameListExpanded ? '접기' : '펼치기'}</span>
+                </button>
+
+                {isGameListExpanded && (
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {GAMES.map(game => (
+                                <button
+                                    key={game.id}
+                                    onClick={() => setActiveGameId(game.id)}
+                                    className="flex items-start p-5 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 hover:border-amber-500 rounded-xl text-left transition-all group"
+                                >
+                                    <div className="p-3 bg-slate-900 rounded-lg mr-4 group-hover:scale-110 transition-transform">
+                                        {game.icon}
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-slate-200 group-hover:text-amber-400 transition-colors">
+                                            {game.title}
+                                        </h3>
+                                        <p className="text-sm text-slate-400 mt-1 leading-relaxed">
+                                            {game.description}
+                                        </p>
+                                    </div>
+                                </button>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {selectedNews && (
@@ -1131,6 +1204,12 @@ export const GameCenter: React.FC = () => {
                                     className="px-3 py-2 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white"
                                 >
                                     {showWebPreview ? '요약 보기로 전환' : '앱 내 웹 미리보기'}
+                                </button>
+                                <button
+                                    onClick={() => navigator.clipboard?.writeText(selectedNews.link)}
+                                    className="px-3 py-2 text-xs font-bold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-100"
+                                >
+                                    링크 복사
                                 </button>
                                 <a
                                     href={selectedNews.link}
