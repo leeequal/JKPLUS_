@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AdminUser } from '../types';
+import { getManagerSpecialtyLabel } from '../utils/roleLabels';
 
 interface PermissionManagementProps {
     users: AdminUser[];
@@ -12,19 +13,6 @@ export const PermissionManagement: React.FC<PermissionManagementProps> = ({ user
     const [error, setError] = useState('');
 
     const managers = users.filter(u => u.role === 'manager');
-
-    const getSpecialtyLabel = (specialty?: AdminUser['specialty']) => {
-        switch (specialty) {
-            case 'planner':
-                return '플래너';
-            case 'programmer':
-                return '프로그래머';
-            case 'tester':
-                return '테스터';
-            default:
-                return '운영자';
-        }
-    };
 
     const handlePermissionChange = (userId: string, permission: keyof NonNullable<AdminUser['permissions']>, value: boolean) => {
         setUsers(currentUsers =>
@@ -119,7 +107,7 @@ export const PermissionManagement: React.FC<PermissionManagementProps> = ({ user
                         {managers.map(user => user.permissions && (
                             <tr key={user.id} className="bg-slate-800/50 border-b border-slate-700 hover:bg-slate-800">
                                 <td className="px-6 py-4 font-medium text-slate-100">{user.username}</td>
-                                <td className="px-6 py-4 text-center font-semibold text-slate-200">{getSpecialtyLabel(user.specialty)}</td>
+                                <td className="px-6 py-4 text-center font-semibold text-slate-200">{getManagerSpecialtyLabel(user.specialty)}</td>
                                 <td className="px-6 py-4 text-center">
                                     <input type="checkbox" checked={user.permissions.canManageMembers} onChange={e => handlePermissionChange(user.id, 'canManageMembers', e.target.checked)} className="h-4 w-4 rounded border-slate-500 bg-slate-600 text-amber-500 focus:ring-amber-500" />
                                 </td>
