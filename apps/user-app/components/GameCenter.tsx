@@ -896,20 +896,46 @@ interface LoungeNewsItem {
     title: string;
     link: string;
     source?: string;
+    pubDate?: string;
+    description?: string;
 }
 
 const FALLBACK_NEWS: LoungeNewsItem[] = [
-    { title: '국내 건설 경기, 인프라·정비사업 중심으로 회복 흐름', link: 'https://news.google.com', source: '산업 브리핑' },
-    { title: '폭염·집중호우 대비 현장 안전관리 강화 권고', link: 'https://news.google.com', source: '안전 이슈' },
-    { title: '노무·정산 디지털화 확산으로 현장 운영 효율 개선', link: 'https://news.google.com', source: '디지털 전환' },
-    { title: '건설업 채용 시장, 숙련 인력 중심 수요 지속', link: 'https://news.google.com', source: '채용 동향' },
+    { title: '국내 건설 경기, 인프라·정비사업 중심으로 회복 흐름', link: 'https://news.google.com', source: '산업 브리핑', description: '건설 경기와 수주 흐름, 현장 운영 관련 주요 이슈를 요약합니다.' },
+    { title: '폭염·집중호우 대비 현장 안전관리 강화 권고', link: 'https://news.google.com', source: '안전 이슈', description: '작업자 보호와 우천·폭염 대응 중심의 현장 안전 소식입니다.' },
+    { title: '노무·정산 디지털화 확산으로 현장 운영 효율 개선', link: 'https://news.google.com', source: '디지털 전환', description: '노무·정산 자동화와 운영 효율화 트렌드를 다룹니다.' },
+    { title: '건설업 채용 시장, 숙련 인력 중심 수요 지속', link: 'https://news.google.com', source: '채용 동향', description: '채용 수요와 인력 매칭 이슈를 확인할 수 있습니다.' },
 ];
+
+const NEWS_CATEGORIES = [
+    { id: 'construction', label: '건설 일반', query: '건설 경기 현장 동향' },
+    { id: 'safety', label: '안전', query: '건설 현장 안전 사고 예방' },
+    { id: 'hiring', label: '채용', query: '건설 채용 인력 수급' },
+    { id: 'policy', label: '정책', query: '건설 정책 국토부' },
+] as const;
+
+type NewsCategoryId = (typeof NEWS_CATEGORIES)[number]['id'];
+
+const stripHtml = (value?: string) => {
+    if (!value) return '요약 정보가 없습니다. 아래 원문 기사 열기로 자세히 확인해 주세요.';
+    return value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+};
+
+const formatNewsDate = (value?: string) => {
+    if (!value) return '';
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return '';
+    return parsed.toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+};
 
 export const GameCenter: React.FC = () => {
     const [activeGameId, setActiveGameId] = useState<string | null>(null);
     const [news, setNews] = useState<LoungeNewsItem[]>(FALLBACK_NEWS);
     const [isNewsLoading, setIsNewsLoading] = useState(true);
     const [newsError, setNewsError] = useState<string | null>(null);
+    const [activeNewsCategory, setActiveNewsCategory] = useState<NewsCategoryId>('construction');
+    const [selectedNews, setSelectedNews] = useState<LoungeNewsItem | null>(null);
+    const [showWebPreview, setShowWebPreview] = useState(false);
 
     const GAMES: GameItem[] = [
         {
@@ -957,7 +983,8 @@ export const GameCenter: React.FC = () => {
         const fetchNews = async () => {
             try {
                 setIsNewsLoading(true);
-                const rssUrl = encodeURIComponent('https://news.google.com/rss/search?q=건설+현장+안전+채용&hl=ko&gl=KR&ceid=KR:ko');
+                const query = NEWS_CATEGORIES.find(category => category.id === activeNewsCategory)?.query ?? NEWS_CATEGORIES[0].query;
+                const rssUrl = encodeURIComponent(`https://news.google.com/rss/search?q=${query}&hl=ko&gl=KR&ceid=KR:ko`);
                 const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`);
                 if (!response.ok) throw new Error(`status ${response.status}`);
                 const data = await response.json();
@@ -967,6 +994,8 @@ export const GameCenter: React.FC = () => {
                         title: item.title as string,
                         link: item.link as string,
                         source: item.author || '주요 뉴스',
+                        pubDate: item.pubDate as string,
+                        description: stripHtml(item.description as string),
                     }))
                     : [];
 
@@ -989,7 +1018,7 @@ export const GameCenter: React.FC = () => {
         return () => {
             isMounted = false;
         };
-    }, []);
+    }, [activeNewsCategory]);
 
     if (activeGame) {
         const GameComponent = activeGame.component;
@@ -1005,6 +1034,45 @@ export const GameCenter: React.FC = () => {
             <div className="mb-6 text-center">
                 <h2 className="text-2xl md:text-3xl font-bold text-slate-100">🏗️ 인력 휴게실</h2>
                 <p className="text-slate-400 mt-2">대기 시간, 지루하지 않게 간단한 게임 한 판 어떠세요?</p>
+            </div>
+
+            <div className="mb-6 bg-slate-800/40 border border-slate-700 rounded-xl p-5">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
+                    <h3 className="text-lg font-bold text-slate-100">📰 주요 뉴스 브리핑</h3>
+                    <div className="flex flex-wrap gap-2">
+                        {NEWS_CATEGORIES.map((category) => (
+                            <button
+                                key={category.id}
+                                onClick={() => setActiveNewsCategory(category.id)}
+                                className={`px-3 py-1.5 rounded-full text-xs font-bold border transition ${
+                                    activeNewsCategory === category.id
+                                        ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
+                                        : 'bg-slate-900/60 border-slate-700 text-slate-400 hover:text-slate-200'
+                                }`}
+                            >
+                                {category.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                {isNewsLoading && <p className="text-xs text-slate-400 mb-2">불러오는 중...</p>}
+                {newsError && <p className="text-xs text-amber-400 mb-2">{newsError}</p>}
+                <ul className="space-y-2">
+                    {news.map((item, index) => (
+                        <li key={`${item.link}-${index}`}>
+                            <button
+                                onClick={() => {
+                                    setSelectedNews(item);
+                                    setShowWebPreview(false);
+                                }}
+                                className="w-full text-left p-3 rounded-lg bg-slate-900/60 border border-slate-700 hover:border-amber-500/50 transition"
+                            >
+                                <p className="text-sm text-slate-200 hover:text-amber-300 transition-colors">{item.title}</p>
+                                <p className="text-[11px] text-slate-500 mt-1">{item.source || '주요 뉴스'} {formatNewsDate(item.pubDate) ? `· ${formatNewsDate(item.pubDate)}` : ''}</p>
+                            </button>
+                        </li>
+                    ))}
+                </ul>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1028,7 +1096,6 @@ export const GameCenter: React.FC = () => {
                     </button>
                 ))}
                 
-                {/* Coming Soon Card */}
                 <div className="flex items-center justify-center p-5 bg-slate-800/30 border border-slate-700/50 rounded-xl border-dashed">
                     <div className="text-center text-slate-500">
                         <span className="text-2xl block mb-2">🚧</span>
@@ -1037,28 +1104,60 @@ export const GameCenter: React.FC = () => {
                 </div>
             </div>
 
-            <div className="mt-6 bg-slate-800/40 border border-slate-700 rounded-xl p-5">
-                <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-bold text-slate-100">📰 주요 뉴스 브리핑</h3>
-                    {isNewsLoading && <span className="text-xs text-slate-400">불러오는 중...</span>}
-                </div>
-                {newsError && <p className="text-xs text-amber-400 mb-2">{newsError}</p>}
-                <ul className="space-y-2">
-                    {news.map((item, index) => (
-                        <li key={`${item.link}-${index}`}>
-                            <a
-                                href={item.link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block p-3 rounded-lg bg-slate-900/60 border border-slate-700 hover:border-amber-500/50 transition"
+            {selectedNews && (
+                <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm p-3 sm:p-6">
+                    <div className="mx-auto h-full max-w-3xl bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden flex flex-col">
+                        <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between gap-2">
+                            <p className="text-sm font-bold text-slate-200">기사 보기</p>
+                            <button
+                                onClick={() => setSelectedNews(null)}
+                                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200"
                             >
-                                <p className="text-sm text-slate-200 hover:text-amber-300 transition-colors">{item.title}</p>
-                                <p className="text-[11px] text-slate-500 mt-1">{item.source || '주요 뉴스'}</p>
-                            </a>
-                        </li>
-                    ))}
-                </ul>
-            </div>
+                                휴게실로 돌아가기
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-4">
+                            <h4 className="text-lg font-bold text-white leading-snug">{selectedNews.title}</h4>
+                            <p className="text-xs text-slate-400 mt-2">{selectedNews.source || '주요 뉴스'} {formatNewsDate(selectedNews.pubDate) ? `· ${formatNewsDate(selectedNews.pubDate)}` : ''}</p>
+
+                            <div className="mt-4 bg-slate-800/70 border border-slate-700 rounded-xl p-4">
+                                <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-wrap">{stripHtml(selectedNews.description)}</p>
+                            </div>
+
+                            <div className="mt-4 flex flex-wrap gap-2">
+                                <button
+                                    onClick={() => setShowWebPreview((prev) => !prev)}
+                                    className="px-3 py-2 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white"
+                                >
+                                    {showWebPreview ? '요약 보기로 전환' : '앱 내 웹 미리보기'}
+                                </button>
+                                <a
+                                    href={selectedNews.link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-3 py-2 text-xs font-bold rounded-lg bg-amber-600 hover:bg-amber-500 text-white"
+                                >
+                                    원문 새 탭으로 열기
+                                </a>
+                            </div>
+
+                            {showWebPreview && (
+                                <div className="mt-4">
+                                    <iframe
+                                        title={selectedNews.title}
+                                        src={selectedNews.link}
+                                        className="w-full h-[52vh] rounded-xl border border-slate-700 bg-white"
+                                    />
+                                    <p className="text-[11px] text-slate-500 mt-2">
+                                        일부 언론사는 앱 내 미리보기를 차단할 수 있습니다. 그 경우 “원문 새 탭으로 열기”를 이용해 주세요.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
