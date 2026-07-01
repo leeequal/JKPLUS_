@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface SettingsViewProps {
   theme: 'light' | 'dark' | 'system';
@@ -13,6 +13,14 @@ interface CompanyInfo {
   address: string;
   phone: string;
 }
+
+const getDefaultCompanyInfo = (isEmployer: boolean): CompanyInfo => ({
+  companyName: isEmployer ? '(주)한길이앤씨' : '',
+  ceoName: isEmployer ? '김민우' : '',
+  businessNumber: isEmployer ? '120-81-99881' : '',
+  address: isEmployer ? '서울특별시 서초구 강남대로 343' : '',
+  phone: isEmployer ? '02-555-0192' : '',
+});
 
 const formatCompanyPhone = (val: string): string => {
   const cleaned = val.replace(/\D/g, '');
@@ -32,29 +40,36 @@ const formatCompanyPhone = (val: string): string => {
 };
 
 export const SettingsView: React.FC<SettingsViewProps> = ({ theme, onThemeChange, isEmployer = false }) => {
-  // Load company info from localStorage
+  const saveSuccessTimeoutRef = useRef<number | null>(null);
+  // Keep shape-safe defaults so malformed localStorage data does not break the settings screen.
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo>(() => {
+    const defaults = getDefaultCompanyInfo(isEmployer);
     const saved = localStorage.getItem(isEmployer ? 'employer_company_info' : 'worker_company_info');
     if (saved) {
       try {
-        return JSON.parse(saved);
-      } catch (e) {
-        // use default
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          return { ...defaults, ...parsed };
+        }
+      } catch (error) {
+        console.error('회사 정보 파싱 실패, 기본값으로 복구합니다.', error);
       }
     }
-    return {
-      companyName: isEmployer ? '(주)한길이앤씨' : '',
-      ceoName: isEmployer ? '김민우' : '',
-      businessNumber: isEmployer ? '120-81-99881' : '',
-      address: isEmployer ? '서울특별시 서초구 강남대로 343' : '',
-      phone: isEmployer ? '02-555-0192' : '',
-    };
+    return defaults;
   });
 
   const [isEditing, setIsEditing] = useState(false);
   const [tempInfo, setTempInfo] = useState<CompanyInfo>({ ...companyInfo });
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [expandedSection, setExpandedSection] = useState<'terms' | 'privacy' | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (saveSuccessTimeoutRef.current !== null) {
+        window.clearTimeout(saveSuccessTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSaveCompany = (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,7 +80,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ theme, onThemeChange
     );
     setIsEditing(false);
     setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 2000);
+    if (saveSuccessTimeoutRef.current !== null) {
+      window.clearTimeout(saveSuccessTimeoutRef.current);
+    }
+    saveSuccessTimeoutRef.current = window.setTimeout(() => {
+      saveSuccessTimeoutRef.current = null;
+      setSaveSuccess(false);
+    }, 2000);
   };
 
   const toggleSection = (section: 'terms' | 'privacy') => {

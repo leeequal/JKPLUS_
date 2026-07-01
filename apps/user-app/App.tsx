@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { Login } from './components/Login';
@@ -26,6 +26,37 @@ interface StoredUser {
   name: string;
 }
 
+const readJsonFromStorage = <T,>(key: string, fallback: T): T => {
+  const raw = localStorage.getItem(key);
+  if (!raw) return fallback;
+
+  try {
+    return JSON.parse(raw) as T;
+  } catch (error) {
+    // Keep the app running even when one storage key is corrupted.
+    console.error(`[storage:${key}] JSON 파싱 실패, 기본값으로 복구합니다.`, error);
+    return fallback;
+  }
+};
+
+const readStorageArray = <T,>(key: string): T[] => {
+  const parsed = readJsonFromStorage<unknown>(key, []);
+  if (Array.isArray(parsed)) return parsed as T[];
+
+  console.error(`[storage:${key}] 배열 형식이 아닙니다. 빈 배열로 복구합니다.`);
+  return [];
+};
+
+const readStorageRecord = <T,>(key: string): Record<string, T> => {
+  const parsed = readJsonFromStorage<unknown>(key, {});
+  if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    return parsed as Record<string, T>;
+  }
+
+  console.error(`[storage:${key}] 객체 형식이 아닙니다. 빈 객체로 복구합니다.`);
+  return {};
+};
+
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<{ phone: string; name: string | null; isRegistered?: boolean } | null>(null);
@@ -40,10 +71,15 @@ const App: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [phoneToVerify, setPhoneToVerify] = useState<string | null>(null);
   const [shouldRememberUser, setShouldRememberUser] = useState(true);
+  const registrationTimeoutRef = useRef<number | null>(null);
+  const profileUpdateTimeoutRef = useRef<number | null>(null);
   
   // Theme state
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>(() => {
-    return (localStorage.getItem('user-app-theme') as 'light' | 'dark' | 'system') || 'system';
+    const storedTheme = localStorage.getItem('user-app-theme');
+    return storedTheme === 'light' || storedTheme === 'dark' || storedTheme === 'system'
+      ? storedTheme
+      : 'system';
   });
 
   // Dynamic Sites State
@@ -79,102 +115,99 @@ const App: React.FC = () => {
   }, [theme]);
 
   useEffect(() => {
-    try {
-      // Initialize test user and 10 mock workers
-      const registeredUsersRaw = localStorage.getItem('registeredUsers');
-      let currentUsers = registeredUsersRaw ? JSON.parse(registeredUsersRaw) : [];
-      
-      const userProfilesRaw = localStorage.getItem('userProfiles');
-      let currentProfiles = userProfilesRaw ? JSON.parse(userProfilesRaw) : {};
+    // Initialize test user and 10 mock workers
+    const currentUsers = readStorageArray<StoredUser>('registeredUsers');
+    const currentProfiles = readStorageRecord<UserProfile>('userProfiles');
 
-      // Check if we need to seed data (if only the default test user exists or empty)
-      if (currentUsers.length <= 1) {
-        // 1. Ensure Default Test User
-        if (!currentUsers.find((u: StoredUser) => u.phone === TEST_USER_PHONE)) {
-            currentUsers.push({ phone: TEST_USER_PHONE, name: '김테스트' });
-            currentProfiles[TEST_USER_PHONE] = {
-                name: '김테스트',
-                rrn: '900101-1234567',
-                gender: 'male',
-                nationality: 'korean',
-                phone: TEST_USER_PHONE,
-                preferredAreas: ['서울 강남구'],
-                bank: 'KB국민은행',
-                accountNumber: '111-222-333444',
-                accountHolder: '김테스트',
-                signatureDataUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 
-                bankAccountFileName: '통장사본.jpg',
-                idCardFileName: '신분증.jpg',
-                safetyCertFileName: '이수증.jpg',
-                profilePictureFileName: '프로필사진.jpg',
-                registrationDate: '2024-07-20T09:00:00.000Z',
-            };
+    // Check if we need to seed data (if only the default test user exists or empty)
+    if (currentUsers.length <= 1) {
+      // 1. Ensure Default Test User
+      if (!currentUsers.find((u) => u.phone === TEST_USER_PHONE)) {
+        currentUsers.push({ phone: TEST_USER_PHONE, name: '김테스트' });
+        currentProfiles[TEST_USER_PHONE] = {
+          name: '김테스트',
+          rrn: '900101-1234567',
+          gender: 'male',
+          nationality: 'korean',
+          phone: TEST_USER_PHONE,
+          preferredAreas: ['서울 강남구'],
+          bank: 'KB국민은행',
+          accountNumber: '111-222-333444',
+          accountHolder: '김테스트',
+          signatureDataUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+          bankAccountFileName: '통장사본.jpg',
+          idCardFileName: '신분증.jpg',
+          safetyCertFileName: '이수증.jpg',
+          profilePictureFileName: '프로필사진.jpg',
+          registrationDate: '2024-07-20T09:00:00.000Z',
+        };
+      }
+
+      // 2. Generate 10 Mock Workers
+      const MOCK_NAMES = ['이철수', '박지영', '최민호', '정수빈', '강현우', '조은지', '윤성민', '장미란', '임재범', '한예슬'];
+      const AREAS = ['서울 강남구', '서울 마포구', '경기 성남시', '경기 수원시', '인천 부평구'];
+
+      MOCK_NAMES.forEach((name, index) => {
+        const phone = `0108000${String(index).padStart(4, '0')}`;
+        if (!currentUsers.find((u) => u.phone === phone)) {
+          const isMale = index % 2 === 0;
+          const birthYear = 80 + index; // 1980~1989
+          const genderDigit = isMale ? '1' : '2';
+
+          currentUsers.push({ phone, name });
+          currentProfiles[phone] = {
+            name,
+            rrn: `${birthYear}0101-${genderDigit}******`,
+            gender: isMale ? 'male' : 'female',
+            nationality: 'korean',
+            phone,
+            preferredAreas: [AREAS[index % AREAS.length]],
+            bank: '신한은행',
+            accountNumber: `110-${index}${index}${index}-123456`,
+            accountHolder: name,
+            signatureDataUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+            bankAccountFileName: 'sample_bank.jpg',
+            idCardFileName: 'sample_id.jpg',
+            safetyCertFileName: 'sample_cert.jpg',
+            registrationDate: `2024-08-${String(index + 1).padStart(2, '0')}T10:${String(index * 5).padStart(2, '0')}:00.000Z`,
+          };
         }
+      });
 
-        // 2. Generate 10 Mock Workers
-        const MOCK_NAMES = ['이철수', '박지영', '최민호', '정수빈', '강현우', '조은지', '윤성민', '장미란', '임재범', '한예슬'];
-        const AREAS = ['서울 강남구', '서울 마포구', '경기 성남시', '경기 수원시', '인천 부평구'];
-        
-        MOCK_NAMES.forEach((name, index) => {
-            const phone = `0108000${String(index).padStart(4, '0')}`;
-            if (!currentUsers.find((u: StoredUser) => u.phone === phone)) {
-                const isMale = index % 2 === 0;
-                const birthYear = 80 + index; // 1980~1989
-                const genderDigit = isMale ? '1' : '2';
-                
-                currentUsers.push({ phone, name });
-                currentProfiles[phone] = {
-                    name,
-                    rrn: `${birthYear}0101-${genderDigit}******`,
-                    gender: isMale ? 'male' : 'female',
-                    nationality: 'korean',
-                    phone,
-                    preferredAreas: [AREAS[index % AREAS.length]],
-                    bank: '신한은행',
-                    accountNumber: `110-${index}${index}${index}-123456`,
-                    accountHolder: name,
-                    signatureDataUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
-                    bankAccountFileName: 'sample_bank.jpg',
-                    idCardFileName: 'sample_id.jpg',
-                    safetyCertFileName: 'sample_cert.jpg',
-                    registrationDate: `2024-08-${String(index + 1).padStart(2, '0')}T10:${String(index*5).padStart(2,'0')}:00.000Z`,
-                };
-            }
-        });
-
-        localStorage.setItem('registeredUsers', JSON.stringify(currentUsers));
-        localStorage.setItem('userProfiles', JSON.stringify(currentProfiles));
-      }
-      
-      const savedUser = localStorage.getItem('currentUser');
-      if (savedUser) {
-        const user = JSON.parse(savedUser);
-        setIsAuthenticated(true);
-        setCurrentUser(user);
-        setCurrentView(user.isRegistered ? 'sites' : 'register');
-        setUserWorkHistory(WORK_HISTORY_DATA.filter(wh => wh.userId === user.phone));
-
-        const savedProfiles = localStorage.getItem('userProfiles');
-        if (savedProfiles) {
-            const profiles = JSON.parse(savedProfiles);
-            setUserProfile(profiles[user.phone] || null);
-        }
-      }
-      const savedAppliedSiteId = localStorage.getItem('appliedSiteId');
-      if (savedAppliedSiteId) {
-        setAppliedSiteId(savedAppliedSiteId);
-      }
-
-      // Load Published Notices (Dynamic Sites)
-      const recruitmentNoticesRaw = localStorage.getItem('recruitmentNotices');
-      const recruitmentNotices: Site[] = recruitmentNoticesRaw ? JSON.parse(recruitmentNoticesRaw) : [];
-      // Merge with static data, prioritizing dynamic ones if needed, or just appending
-      setAllSites([...SITES_DATA, ...recruitmentNotices]);
-
-    } catch (error) {
-      console.error("Failed to parse data from localStorage", error);
-      localStorage.clear(); 
+      localStorage.setItem('registeredUsers', JSON.stringify(currentUsers));
+      localStorage.setItem('userProfiles', JSON.stringify(currentProfiles));
     }
+
+    const savedUser = readJsonFromStorage<{ phone: string; name: string | null; isRegistered?: boolean } | null>('currentUser', null);
+    if (savedUser) {
+      setIsAuthenticated(true);
+      setCurrentUser(savedUser);
+      setCurrentView(savedUser.isRegistered ? 'sites' : 'register');
+      setUserWorkHistory(WORK_HISTORY_DATA.filter(wh => wh.userId === savedUser.phone));
+
+      const profiles = readStorageRecord<UserProfile>('userProfiles');
+      setUserProfile(profiles[savedUser.phone] || null);
+    }
+
+    const savedAppliedSiteId = localStorage.getItem('appliedSiteId');
+    if (savedAppliedSiteId) {
+      setAppliedSiteId(savedAppliedSiteId);
+    }
+
+    // Merge published notices with static site data.
+    const recruitmentNotices = readStorageArray<Site>('recruitmentNotices');
+    setAllSites([...SITES_DATA, ...recruitmentNotices]);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (registrationTimeoutRef.current !== null) {
+        window.clearTimeout(registrationTimeoutRef.current);
+      }
+      if (profileUpdateTimeoutRef.current !== null) {
+        window.clearTimeout(profileUpdateTimeoutRef.current);
+      }
+    };
   }, []);
 
   const handleLogin = (phone: string, rememberMe: boolean) => {
@@ -186,8 +219,7 @@ const App: React.FC = () => {
   const handleAuthSuccess = (rememberMe: boolean) => {
     if (!phoneToVerify) return;
 
-    const registeredUsersRaw = localStorage.getItem('registeredUsers');
-    const registeredUsers: StoredUser[] = registeredUsersRaw ? JSON.parse(registeredUsersRaw) : [];
+    const registeredUsers = readStorageArray<StoredUser>('registeredUsers');
     const existingUser = registeredUsers.find(u => u.phone === phoneToVerify);
     
     let user: { phone: string; name: string | null; isRegistered: boolean; };
@@ -197,11 +229,8 @@ const App: React.FC = () => {
         setCurrentUser(user);
         setUserWorkHistory(WORK_HISTORY_DATA.filter(wh => wh.userId === phoneToVerify));
         
-        const userProfilesRaw = localStorage.getItem('userProfiles');
-        if (userProfilesRaw) {
-            const profiles = JSON.parse(userProfilesRaw);
-            setUserProfile(profiles[phoneToVerify] || null);
-        }
+        const profiles = readStorageRecord<UserProfile>('userProfiles');
+        setUserProfile(profiles[phoneToVerify] || null);
         setCurrentView('sites');
     } else {
         user = { phone: phoneToVerify, name: null, isRegistered: false };
@@ -234,16 +263,20 @@ const App: React.FC = () => {
   };
 
   const handleRegistrationSubmit = (data: SubmissionData) => {
-    if (!currentUser) return;
+    if (!currentUser || isLoading) return;
     setIsLoading(true);
-    
-    setTimeout(() => {
+
+    if (registrationTimeoutRef.current !== null) {
+      window.clearTimeout(registrationTimeoutRef.current);
+    }
+
+    registrationTimeoutRef.current = window.setTimeout(() => {
+        registrationTimeoutRef.current = null;
         setSubmission(data);
         const updatedUser = { ...currentUser, name: data.name, isRegistered: true };
         setCurrentUser(updatedUser);
 
-        const registeredUsersRaw = localStorage.getItem('registeredUsers');
-        const registeredUsers: StoredUser[] = registeredUsersRaw ? JSON.parse(registeredUsersRaw) : [];
+        const registeredUsers = readStorageArray<StoredUser>('registeredUsers');
         const newUser: StoredUser = { phone: currentUser.phone, name: data.name };
         if (!registeredUsers.find(u => u.phone === newUser.phone)) {
             registeredUsers.push(newUser);
@@ -261,8 +294,7 @@ const App: React.FC = () => {
             userProfileData.profilePictureFileName = data.profilePictureFile.name;
         }
 
-        const profilesRaw = localStorage.getItem('userProfiles');
-        const profiles = profilesRaw ? JSON.parse(profilesRaw) : {};
+        const profiles = readStorageRecord<UserProfile>('userProfiles');
         profiles[currentUser.phone] = userProfileData;
         localStorage.setItem('userProfiles', JSON.stringify(profiles));
         setUserProfile(userProfileData);
@@ -311,11 +343,16 @@ const App: React.FC = () => {
   };
 
   const handleProfileUpdate = (data: ProfileUpdateData) => {
-    if (!currentUser || !userProfile) return;
+    if (!currentUser || !userProfile || isLoading) return;
     
     setIsLoading(true);
-    
-    setTimeout(() => {
+
+    if (profileUpdateTimeoutRef.current !== null) {
+      window.clearTimeout(profileUpdateTimeoutRef.current);
+    }
+
+    profileUpdateTimeoutRef.current = window.setTimeout(() => {
+        profileUpdateTimeoutRef.current = null;
         const updatedProfile: UserProfile = { ...userProfile };
         
         Object.assign(updatedProfile, {
@@ -337,8 +374,7 @@ const App: React.FC = () => {
         if (data.safetyCertFile) updatedProfile.safetyCertFileName = data.safetyCertFile.name;
         if (data.bankAccountFile) updatedProfile.bankAccountFileName = data.bankAccountFile.name;
         
-        const profilesRaw = localStorage.getItem('userProfiles');
-        const profiles = profilesRaw ? JSON.parse(profilesRaw) : {};
+        const profiles = readStorageRecord<UserProfile>('userProfiles');
         profiles[currentUser.phone] = updatedProfile;
         localStorage.setItem('userProfiles', JSON.stringify(profiles));
         setUserProfile(updatedProfile);

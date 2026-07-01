@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Site } from '../data/sites';
 import { SiteMap } from './SiteMap';
 
@@ -31,11 +31,25 @@ const InfoMessage: React.FC<{ icon: React.ReactNode; text: string; subtext?: str
 
 export const SiteDetail: React.FC<SiteDetailProps> = ({ site, onBack, appliedSiteId, onApply, currentUser }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const applyTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (applyTimeoutRef.current !== null) {
+        window.clearTimeout(applyTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleApply = () => {
+    if (isLoading) return;
     setIsLoading(true);
     // Simulate API call
-    setTimeout(() => {
+    if (applyTimeoutRef.current !== null) {
+      window.clearTimeout(applyTimeoutRef.current);
+    }
+    applyTimeoutRef.current = window.setTimeout(() => {
+      applyTimeoutRef.current = null;
       onApply(site.id);
       setIsLoading(false);
     }, 1500);

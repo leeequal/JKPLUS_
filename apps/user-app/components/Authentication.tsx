@@ -15,9 +15,18 @@ export const Authentication: React.FC<AuthenticationProps> = ({ phone, onVerify,
     const [isLoading, setIsLoading] = useState(false);
 
     const inputRef = useRef<HTMLInputElement>(null);
+    const verifyTimeoutRef = useRef<number | null>(null);
 
     useEffect(() => {
         inputRef.current?.focus();
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            if (verifyTimeoutRef.current !== null) {
+                window.clearTimeout(verifyTimeoutRef.current);
+            }
+        };
     }, []);
     
     const handleOtpChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -30,11 +39,16 @@ export const Authentication: React.FC<AuthenticationProps> = ({ phone, onVerify,
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
+        if (isLoading) return;
         setError('');
         setIsLoading(true);
 
         // Simulate API call
-        setTimeout(() => {
+        if (verifyTimeoutRef.current !== null) {
+            window.clearTimeout(verifyTimeoutRef.current);
+        }
+        verifyTimeoutRef.current = window.setTimeout(() => {
+            verifyTimeoutRef.current = null;
             if (otp === MOCK_OTP) {
                 onVerify(rememberMe);
             } else {

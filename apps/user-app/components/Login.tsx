@@ -1,4 +1,4 @@
-import React, { useState, FormEvent, ChangeEvent } from 'react';
+import React, { useState, FormEvent, ChangeEvent, useEffect, useRef } from 'react';
 
 interface LoginProps {
     onLogin: (phone: string, rememberMe: boolean) => void;
@@ -17,6 +17,15 @@ export const Login: React.FC<LoginProps> = ({
     const [error, setError] = useState('');
     const [rememberMe, setRememberMe] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
+    const loginTimeoutRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (loginTimeoutRef.current !== null) {
+                window.clearTimeout(loginTimeoutRef.current);
+            }
+        };
+    }, []);
 
     const formatPhone = (val: string): string => {
         const cleaned = val.replace(/\D/g, '');
@@ -34,6 +43,7 @@ export const Login: React.FC<LoginProps> = ({
     };
 
     const handleLogin = () => {
+        if (isLoading) return;
         setError('');
         const rawPhone = phone.replace(/\D/g, '');
         if (!/^\d{10,11}$/.test(rawPhone)) {
@@ -41,8 +51,12 @@ export const Login: React.FC<LoginProps> = ({
             return;
         }
         setIsLoading(true);
-        // Add a short delay to make the loading state visible for better UX
-        setTimeout(() => {
+        // Keep a short delay for UX while ensuring pending timer is cleaned up on unmount.
+        if (loginTimeoutRef.current !== null) {
+            window.clearTimeout(loginTimeoutRef.current);
+        }
+        loginTimeoutRef.current = window.setTimeout(() => {
+            loginTimeoutRef.current = null;
             onLogin(rawPhone, rememberMe);
         }, 500);
     };

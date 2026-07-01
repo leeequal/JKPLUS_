@@ -1,4 +1,4 @@
-import React, { useState, FormEvent } from 'react';
+import React, { useState, FormEvent, useEffect, useRef } from 'react';
 import { AdminUser } from '../types';
 
 interface AdminLoginProps {
@@ -11,13 +11,27 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ users, onLogin }) => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const loginTimeoutRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (loginTimeoutRef.current !== null) {
+                window.clearTimeout(loginTimeoutRef.current);
+            }
+        };
+    }, []);
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
+        if (isLoading) return;
         setIsLoading(true);
         setError('');
-        
-        setTimeout(() => {
+
+        if (loginTimeoutRef.current !== null) {
+            window.clearTimeout(loginTimeoutRef.current);
+        }
+        loginTimeoutRef.current = window.setTimeout(() => {
+            loginTimeoutRef.current = null;
             const foundUser = users.find(u => u.username === username && u.password === password);
             if (foundUser) {
                 onLogin(foundUser);
