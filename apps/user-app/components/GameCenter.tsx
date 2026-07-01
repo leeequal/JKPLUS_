@@ -22,10 +22,16 @@ function useInterval(callback: () => void, delay: number | null) {
     }, [delay]);
 }
 
+interface GameComponentProps {
+    onBack: () => void;
+    onScoreChange: (score: number) => void;
+    highScore: number;
+}
+
 // ==========================================
 // Game 1: AI Omok (오목)
 // ==========================================
-const OmokGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+const OmokGame: React.FC<GameComponentProps> = ({ onBack, onScoreChange, highScore }) => {
     const BOARD_SIZE = 13; 
     const EMPTY = 0;
     const BLACK = 1; // User
@@ -38,6 +44,7 @@ const OmokGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const [turn, setTurn] = useState<number>(BLACK);
     const [lastMove, setLastMove] = useState<{r: number, c: number} | null>(null);
     const [isAiThinking, setIsAiThinking] = useState(false);
+    const [score, setScore] = useState(0);
 
     const resetGame = () => {
         setBoard(Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(EMPTY)));
@@ -45,7 +52,18 @@ const OmokGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         setTurn(BLACK);
         setLastMove(null);
         setIsAiThinking(false);
+        setScore(0);
     };
+
+    useEffect(() => {
+        if (gameStatus === 'won') setScore(100);
+        else if (gameStatus === 'draw') setScore(40);
+        else if (gameStatus === 'lost') setScore(10);
+    }, [gameStatus]);
+
+    useEffect(() => {
+        onScoreChange(score);
+    }, [onScoreChange, score]);
 
     const checkWin = (currentBoard: number[][], r: number, c: number, player: number) => {
         const directions = [[0, 1], [1, 0], [1, 1], [1, -1]]; 
@@ -302,6 +320,10 @@ const OmokGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors ${turn === WHITE ? 'bg-slate-800 text-amber-300 border border-amber-500/40' : 'border border-transparent'}`}>
                     <div className="w-3 h-3 rounded-full bg-white border border-slate-600"></div> AI (백) {isAiThinking && <span className="ml-1 animate-pulse">...</span>}
                 </div>
+                <div className="mt-3 w-full flex justify-between px-3 py-2 rounded-xl bg-slate-800/60 border border-slate-700 text-xs text-slate-200">
+                    <span>현재 점수: <strong className="text-amber-300">{score}</strong></span>
+                    <span>최고점: <strong className="text-emerald-300">{highScore}</strong></span>
+                </div>
             </div>
         </div>
     );
@@ -317,11 +339,12 @@ interface MahjongTile {
     isMatched: boolean;
 }
 
-const MahjongGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+const MahjongGame: React.FC<GameComponentProps> = ({ onBack, onScoreChange, highScore }) => {
     const [tiles, setTiles] = useState<MahjongTile[]>([]);
     const [selectedTileId, setSelectedTileId] = useState<number | null>(null);
     const [matches, setMatches] = useState(0);
     const [isGameClear, setIsGameClear] = useState(false);
+    const [score, setScore] = useState(0);
 
     // Standard Mahjong Unicode Tiles
     const TILE_TYPES = [
@@ -367,6 +390,7 @@ const MahjongGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         setSelectedTileId(null);
         setMatches(0);
         setIsGameClear(false);
+        setScore(0);
     };
 
     const handleTileClick = (id: number) => {
@@ -389,9 +413,11 @@ const MahjongGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 setTiles(prev => prev.map(t => 
                     (t.id === id || t.id === selectedTileId) ? { ...t, isMatched: true } : t
                 ));
+                setScore(prev => prev + 20);
                 setMatches(prev => {
                     const newMatches = prev + 1;
                     if (newMatches === TOTAL_TILES / 2) {
+                        setScore(prevScore => prevScore + 120);
                         setTimeout(() => setIsGameClear(true), 500);
                     }
                     return newMatches;
@@ -403,6 +429,10 @@ const MahjongGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             }
         }
     };
+
+    useEffect(() => {
+        onScoreChange(score);
+    }, [onScoreChange, score]);
 
     return (
         <div className="flex flex-col items-center bg-gradient-to-b from-slate-900 to-slate-900/95 border border-slate-700/70 rounded-2xl p-4 w-full max-w-md mx-auto shadow-[0_16px_36px_rgba(0,0,0,0.35)]">
@@ -456,6 +486,10 @@ const MahjongGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <span>남은 짝: {(TOTAL_TILES / 2) - matches}</span>
                 <span>매칭: {matches} / {TOTAL_TILES / 2}</span>
             </div>
+            <div className="mt-2 w-full flex justify-between px-4 py-2 rounded-xl bg-slate-800/60 border border-slate-700/70 text-xs text-slate-200">
+                <span>현재 점수: <strong className="text-amber-300">{score}</strong></span>
+                <span>최고점: <strong className="text-emerald-300">{highScore}</strong></span>
+            </div>
         </div>
     );
 };
@@ -497,7 +531,7 @@ const checkCollision = (player: any, stage: any, { x: moveX, y: moveY }: { x: nu
     return false;
 };
 
-const TetrisGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+const TetrisGame: React.FC<GameComponentProps> = ({ onBack, onScoreChange, highScore }) => {
     const [stage, setStage] = useState(createStage());
     const [dropTime, setDropTime] = useState<number | null>(null);
     const [gameOver, setGameOver] = useState(false);
@@ -647,6 +681,10 @@ const TetrisGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [player, stage, gameOver]); // eslint-disable-line
 
+    useEffect(() => {
+        onScoreChange(score);
+    }, [onScoreChange, score]);
+
     const getCellColor = (cell: any[]) => {
         if (cell[0] === 0) return 'bg-slate-800/50';
         if (cell[2]) {
@@ -706,6 +744,10 @@ const TetrisGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <span className="text-slate-400 text-sm">Score</span>
                 <span className="text-amber-300 font-semibold text-xl">{score}</span>
             </div>
+            <div className="w-full px-4 flex justify-between items-center bg-slate-800/70 border border-slate-700 p-2.5 rounded-xl mb-4 text-xs text-slate-200">
+                <span>최고점</span>
+                <span className="text-emerald-300 font-semibold">{highScore}</span>
+            </div>
 
             {/* Mobile Controls */}
             <div className="grid grid-cols-3 gap-2 w-full px-4 mb-2">
@@ -751,11 +793,12 @@ const TetrisGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 // ==========================================
 // Game 4: Reaction Speed Test (안전모 잡기)
 // ==========================================
-const ReactionGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+const ReactionGame: React.FC<GameComponentProps> = ({ onBack, onScoreChange, highScore }) => {
     const [state, setState] = useState<'waiting' | 'ready' | 'now' | 'finished'>('waiting');
     const [message, setMessage] = useState('화면을 클릭해서 시작하세요.');
     const [startTime, setStartTime] = useState(0);
     const [score, setScore] = useState<number | null>(null);
+    const [reactionMs, setReactionMs] = useState<number | null>(null);
     const timeoutRef = useRef<number | null>(null);
 
     const handleMouseDown = () => {
@@ -763,6 +806,7 @@ const ReactionGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             setState('ready');
             setMessage('초록색이 되면 클릭하세요! (기다리세요...)');
             setScore(null);
+            setReactionMs(null);
             
             const randomTime = Math.floor(Math.random() * 2000) + 1000; // 1-3 seconds
             timeoutRef.current = window.setTimeout(() => {
@@ -777,11 +821,17 @@ const ReactionGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         } else if (state === 'now') {
             const endTime = Date.now();
             const reactionTime = endTime - startTime;
-            setScore(reactionTime);
+            const calculatedScore = Math.max(0, 1200 - reactionTime);
+            setReactionMs(reactionTime);
+            setScore(calculatedScore);
             setState('finished');
-            setMessage(`${reactionTime}ms! 대단한 반사신경입니다. 다시 하려면 클릭하세요.`);
+            setMessage(`${reactionTime}ms 반응! 점수 ${calculatedScore}점입니다. 다시 하려면 클릭하세요.`);
         }
     };
+
+    useEffect(() => {
+        onScoreChange(score ?? 0);
+    }, [onScoreChange, score]);
 
     return (
         <div 
@@ -797,7 +847,8 @@ const ReactionGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <p className="text-lg text-slate-100 font-medium mb-2">{message}</p>
             {score !== null && (
                 <div className="mt-4 p-4 bg-black/30 rounded-lg">
-                    <p className="text-3xl font-bold text-amber-400">{score} ms</p>
+                    <p className="text-3xl font-bold text-amber-400">{score} 점</p>
+                    {reactionMs !== null && <p className="text-xs text-slate-200 mt-1">반응속도: {reactionMs} ms</p>}
                 </div>
             )}
             <div className="mt-8 text-sm text-slate-200/90">
@@ -809,6 +860,10 @@ const ReactionGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             >
                 게임 목록으로
             </button>
+            <div className="mt-4 w-full max-w-xs flex justify-between px-3 py-2 rounded-xl bg-slate-800/60 border border-slate-700 text-xs text-slate-200">
+                <span>최고점</span>
+                <span className="text-emerald-300 font-semibold">{highScore}</span>
+            </div>
         </div>
     );
 };
@@ -816,17 +871,18 @@ const ReactionGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 // ==========================================
 // Game 5: Lucky Draw (오늘의 운세)
 // ==========================================
-const LuckyGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+const LuckyGame: React.FC<GameComponentProps> = ({ onBack, onScoreChange, highScore }) => {
     const [result, setResult] = useState<string | null>(null);
     const [isSpinning, setIsSpinning] = useState(false);
+    const [score, setScore] = useState(0);
 
     const fortunes = [
-        "🚧 오늘은 안전운이 최고! 무사고 기원합니다.",
-        "💰 예상치 못한 수입이 생길지도 몰라요!",
-        "👷‍♂️ 좋은 동료를 만나 일이 술술 풀릴 거예요.",
-        "🍱 점심 메뉴가 아주 맛있을 예정입니다.",
-        "🌞 날씨도 좋고 컨디션도 최상이네요!",
-        "🔧 장비빨이 잘 받는 날입니다. 능률 Up!"
+        { text: "🚧 오늘은 안전운이 최고! 무사고 기원합니다.", point: 80 },
+        { text: "💰 예상치 못한 수입이 생길지도 몰라요!", point: 100 },
+        { text: "👷‍♂️ 좋은 동료를 만나 일이 술술 풀릴 거예요.", point: 70 },
+        { text: "🍱 점심 메뉴가 아주 맛있을 예정입니다.", point: 50 },
+        { text: "🌞 날씨도 좋고 컨디션도 최상이네요!", point: 60 },
+        { text: "🔧 장비빨이 잘 받는 날입니다. 능률 Up!", point: 90 }
     ];
 
     const drawFortune = () => {
@@ -836,10 +892,15 @@ const LuckyGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         
         setTimeout(() => {
             const randomIndex = Math.floor(Math.random() * fortunes.length);
-            setResult(fortunes[randomIndex]);
+            setResult(fortunes[randomIndex].text);
+            setScore(fortunes[randomIndex].point);
             setIsSpinning(false);
         }, 1500);
     };
+
+    useEffect(() => {
+        onScoreChange(score);
+    }, [onScoreChange, score]);
 
     return (
         <div className="flex flex-col items-center justify-center h-96 bg-gradient-to-b from-slate-900 to-slate-900/95 border border-slate-700/70 rounded-2xl p-6 text-center shadow-[0_16px_36px_rgba(0,0,0,0.35)]">
@@ -876,6 +937,401 @@ const LuckyGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     나가기
                 </button>
             </div>
+            <div className="mt-4 w-full max-w-xs flex justify-between px-3 py-2 rounded-xl bg-slate-800/60 border border-slate-700 text-xs text-slate-200">
+                <span>현재 점수: <strong className="text-amber-300">{score}</strong></span>
+                <span>최고점: <strong className="text-emerald-300">{highScore}</strong></span>
+            </div>
+        </div>
+    );
+};
+
+// ==========================================
+// Game 6: Safety OX Quiz (안전 OX 퀴즈)
+// ==========================================
+const SafetyQuizGame: React.FC<GameComponentProps> = ({ onBack, onScoreChange, highScore }) => {
+    const questions = [
+        { text: '안전모는 현장 진입 시 항상 착용해야 한다.', answer: true },
+        { text: '고소작업 중 안전벨트는 선택사항이다.', answer: false },
+        { text: '장비 이상 징후는 즉시 보고해야 한다.', answer: true },
+        { text: '폭염 경보 시에도 휴식 없이 계속 작업한다.', answer: false },
+        { text: '작업 시작 전 TBM(안전회의)은 생략 가능하다.', answer: false },
+    ];
+    const [index, setIndex] = useState(0);
+    const [score, setScore] = useState(0);
+    const [isFinished, setIsFinished] = useState(false);
+    const [feedback, setFeedback] = useState<string | null>(null);
+
+    const handleAnswer = (picked: boolean) => {
+        if (isFinished) return;
+        const isCorrect = questions[index].answer === picked;
+        if (isCorrect) setScore(prev => prev + 20);
+        setFeedback(isCorrect ? '정답입니다!' : '오답입니다.');
+    };
+
+    const goNext = () => {
+        if (index === questions.length - 1) {
+            setIsFinished(true);
+            return;
+        }
+        setIndex(prev => prev + 1);
+        setFeedback(null);
+    };
+
+    const resetQuiz = () => {
+        setIndex(0);
+        setScore(0);
+        setIsFinished(false);
+        setFeedback(null);
+    };
+
+    useEffect(() => {
+        onScoreChange(score);
+    }, [onScoreChange, score]);
+
+    return (
+        <div className="flex flex-col items-center bg-gradient-to-b from-slate-900 to-slate-900/95 border border-slate-700/70 rounded-2xl p-5 w-full max-w-md mx-auto shadow-[0_16px_36px_rgba(0,0,0,0.35)]">
+            <h3 className="text-xl font-semibold text-slate-100">🛟 안전 OX 퀴즈</h3>
+            {!isFinished ? (
+                <div className="w-full mt-4">
+                    <p className="text-xs text-slate-300">문항 {index + 1} / {questions.length}</p>
+                    <p className="mt-3 p-4 rounded-xl bg-slate-800/70 border border-slate-700 text-slate-100">{questions[index].text}</p>
+                    <div className="mt-4 grid grid-cols-2 gap-3">
+                        <button onClick={() => handleAnswer(true)} className="px-4 py-3 rounded-xl bg-emerald-600/80 hover:bg-emerald-500 text-white font-semibold">O</button>
+                        <button onClick={() => handleAnswer(false)} className="px-4 py-3 rounded-xl bg-rose-600/80 hover:bg-rose-500 text-white font-semibold">X</button>
+                    </div>
+                    {feedback && <p className="mt-3 text-sm text-amber-300">{feedback}</p>}
+                    <button onClick={goNext} className="mt-4 w-full px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">다음</button>
+                </div>
+            ) : (
+                <div className="w-full mt-4 text-center">
+                    <p className="text-slate-200">퀴즈 완료!</p>
+                    <p className="text-2xl font-bold text-amber-300 mt-2">{score}점</p>
+                    <button onClick={resetQuiz} className="mt-4 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">다시 풀기</button>
+                </div>
+            )}
+            <div className="mt-4 w-full flex justify-between px-3 py-2 rounded-xl bg-slate-800/60 border border-slate-700 text-xs text-slate-200">
+                <span>현재 점수: <strong className="text-amber-300">{score}</strong></span>
+                <span>최고점: <strong className="text-emerald-300">{highScore}</strong></span>
+            </div>
+            <button onClick={onBack} className="mt-3 px-4 py-2 rounded-lg border border-slate-600 bg-slate-800 text-slate-200 text-sm">나가기</button>
+        </div>
+    );
+};
+
+// ==========================================
+// Game 7: Sports Shootout (승부차기)
+// ==========================================
+const SportsShootGame: React.FC<GameComponentProps> = ({ onBack, onScoreChange, highScore }) => {
+    const TOTAL_ROUNDS = 5;
+    const [power, setPower] = useState(50);
+    const [direction, setDirection] = useState<1 | -1>(1);
+    const [target, setTarget] = useState(() => Math.floor(Math.random() * 81) + 10);
+    const [round, setRound] = useState(1);
+    const [score, setScore] = useState(0);
+    const [isFinished, setIsFinished] = useState(false);
+
+    useInterval(() => {
+        if (isFinished) return;
+        setPower(prev => {
+            const next = prev + direction * 4;
+            if (next >= 100) {
+                setDirection(-1);
+                return 100;
+            }
+            if (next <= 0) {
+                setDirection(1);
+                return 0;
+            }
+            return next;
+        });
+    }, 60);
+
+    const shoot = () => {
+        if (isFinished) return;
+        const gained = Math.max(0, 100 - Math.abs(power - target) * 2);
+        setScore(prev => prev + gained);
+        if (round >= TOTAL_ROUNDS) {
+            setIsFinished(true);
+            return;
+        }
+        setRound(prev => prev + 1);
+        setTarget(Math.floor(Math.random() * 81) + 10);
+    };
+
+    const resetGame = () => {
+        setRound(1);
+        setScore(0);
+        setIsFinished(false);
+        setTarget(Math.floor(Math.random() * 81) + 10);
+        setPower(50);
+        setDirection(1);
+    };
+
+    useEffect(() => {
+        onScoreChange(score);
+    }, [onScoreChange, score]);
+
+    return (
+        <div className="flex flex-col items-center bg-gradient-to-b from-slate-900 to-slate-900/95 border border-slate-700/70 rounded-2xl p-5 w-full max-w-md mx-auto shadow-[0_16px_36px_rgba(0,0,0,0.35)]">
+            <h3 className="text-xl font-semibold text-slate-100">⚽ 승부차기 챌린지</h3>
+            <p className="text-xs text-slate-300 mt-1">라운드 {round} / {TOTAL_ROUNDS}</p>
+            <div className="mt-4 w-full bg-slate-800/70 border border-slate-700 rounded-xl p-4">
+                <div className="relative h-4 rounded-full bg-slate-700">
+                    <div className="absolute top-0 bottom-0 w-1 bg-emerald-400" style={{ left: `${target}%` }} />
+                    <div className="absolute -top-1 -bottom-1 w-2 rounded bg-amber-400" style={{ left: `${power}%` }} />
+                </div>
+                <p className="mt-3 text-xs text-slate-300">움직이는 파워 게이지를 타깃 위치에 맞춰 슛!</p>
+            </div>
+            {isFinished ? (
+                <button onClick={resetGame} className="mt-4 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">다시 도전</button>
+            ) : (
+                <button onClick={shoot} className="mt-4 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">슛 하기</button>
+            )}
+            <div className="mt-4 w-full flex justify-between px-3 py-2 rounded-xl bg-slate-800/60 border border-slate-700 text-xs text-slate-200">
+                <span>현재 점수: <strong className="text-amber-300">{score}</strong></span>
+                <span>최고점: <strong className="text-emerald-300">{highScore}</strong></span>
+            </div>
+            <button onClick={onBack} className="mt-3 px-4 py-2 rounded-lg border border-slate-600 bg-slate-800 text-slate-200 text-sm">나가기</button>
+        </div>
+    );
+};
+
+// ==========================================
+// Game 8: Memory Flip (카드 뒤집기)
+// ==========================================
+const MemoryFlipGame: React.FC<GameComponentProps> = ({ onBack, onScoreChange, highScore }) => {
+    const symbols = ['🚧', '🧱', '🛟', '⚙️', '👷', '🏗️'];
+    const [cards, setCards] = useState<{ id: number; value: string; matched: boolean }[]>([]);
+    const [openIds, setOpenIds] = useState<number[]>([]);
+    const [moves, setMoves] = useState(0);
+    const [score, setScore] = useState(0);
+    const [isFinished, setIsFinished] = useState(false);
+
+    const setup = useCallback(() => {
+        const paired = [...symbols, ...symbols].sort(() => Math.random() - 0.5);
+        setCards(paired.map((value, id) => ({ id, value, matched: false })));
+        setOpenIds([]);
+        setMoves(0);
+        setScore(0);
+        setIsFinished(false);
+    }, []);
+
+    useEffect(() => {
+        setup();
+    }, [setup]);
+
+    const clickCard = (id: number) => {
+        const target = cards.find(card => card.id === id);
+        if (!target || target.matched || openIds.includes(id) || openIds.length === 2 || isFinished) return;
+        const nextOpen = [...openIds, id];
+        setOpenIds(nextOpen);
+        if (nextOpen.length === 2) {
+            setMoves(prev => prev + 1);
+            const first = cards.find(card => card.id === nextOpen[0]);
+            const second = cards.find(card => card.id === nextOpen[1]);
+            if (first && second && first.value === second.value) {
+                setCards(prev => prev.map(card => (nextOpen.includes(card.id) ? { ...card, matched: true } : card)));
+                setScore(prev => prev + 50);
+                setOpenIds([]);
+            } else {
+                setTimeout(() => setOpenIds([]), 500);
+            }
+        }
+    };
+
+    useEffect(() => {
+        if (cards.length > 0 && cards.every(card => card.matched)) {
+            const bonus = Math.max(0, 300 - moves * 20);
+            setScore(prev => prev + bonus);
+            setIsFinished(true);
+        }
+    }, [cards, moves]);
+
+    useEffect(() => {
+        onScoreChange(score);
+    }, [onScoreChange, score]);
+
+    return (
+        <div className="flex flex-col items-center bg-gradient-to-b from-slate-900 to-slate-900/95 border border-slate-700/70 rounded-2xl p-5 w-full max-w-md mx-auto shadow-[0_16px_36px_rgba(0,0,0,0.35)]">
+            <h3 className="text-xl font-semibold text-slate-100">🧠 카드 뒤집기</h3>
+            <div className="mt-4 grid grid-cols-4 gap-2 w-full">
+                {cards.map(card => {
+                    const opened = openIds.includes(card.id) || card.matched;
+                    return (
+                        <button
+                            key={card.id}
+                            onClick={() => clickCard(card.id)}
+                            className={`h-14 rounded-lg border text-xl transition ${opened ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-slate-800 border-slate-700 text-slate-800'}`}
+                        >
+                            {opened ? card.value : '●'}
+                        </button>
+                    );
+                })}
+            </div>
+            <p className="mt-3 text-xs text-slate-300">시도 횟수: {moves}</p>
+            {isFinished && <button onClick={setup} className="mt-3 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">다시 도전</button>}
+            <div className="mt-4 w-full flex justify-between px-3 py-2 rounded-xl bg-slate-800/60 border border-slate-700 text-xs text-slate-200">
+                <span>현재 점수: <strong className="text-amber-300">{score}</strong></span>
+                <span>최고점: <strong className="text-emerald-300">{highScore}</strong></span>
+            </div>
+            <button onClick={onBack} className="mt-3 px-4 py-2 rounded-lg border border-slate-600 bg-slate-800 text-slate-200 text-sm">나가기</button>
+        </div>
+    );
+};
+
+// ==========================================
+// Game 9: Brick Strike (벽돌깨기 라이트)
+// ==========================================
+const BrickStrikeGame: React.FC<GameComponentProps> = ({ onBack, onScoreChange, highScore }) => {
+    const [columns, setColumns] = useState([5, 5, 5, 5, 5]);
+    const [timeLeft, setTimeLeft] = useState(30);
+    const [score, setScore] = useState(0);
+    const [running, setRunning] = useState(true);
+
+    useInterval(() => {
+        if (!running) return;
+        setTimeLeft(prev => {
+            if (prev <= 1) {
+                setRunning(false);
+                return 0;
+            }
+            return prev - 1;
+        });
+    }, 1000);
+
+    const hitColumn = (index: number) => {
+        if (!running) return;
+        setColumns(prev => {
+            if (prev[index] <= 0) return prev;
+            const next = [...prev];
+            next[index] -= 1;
+            setScore(s => s + 15);
+            if (next.every(value => value === 0)) setRunning(false);
+            return next;
+        });
+    };
+
+    const resetGame = () => {
+        setColumns([5, 5, 5, 5, 5]);
+        setTimeLeft(30);
+        setScore(0);
+        setRunning(true);
+    };
+
+    useEffect(() => {
+        onScoreChange(score);
+    }, [onScoreChange, score]);
+
+    return (
+        <div className="flex flex-col items-center bg-gradient-to-b from-slate-900 to-slate-900/95 border border-slate-700/70 rounded-2xl p-5 w-full max-w-md mx-auto shadow-[0_16px_36px_rgba(0,0,0,0.35)]">
+            <h3 className="text-xl font-semibold text-slate-100">🧱 벽돌깨기 라이트</h3>
+            <p className="text-xs text-slate-300 mt-1">남은 시간: {timeLeft}s</p>
+            <div className="mt-4 w-full grid grid-cols-5 gap-2">
+                {columns.map((count, index) => (
+                    <button key={index} onClick={() => hitColumn(index)} className="rounded-lg bg-slate-800 border border-slate-700 p-2">
+                        <div className="h-32 flex flex-col-reverse gap-1">
+                            {Array.from({ length: 5 }).map((_, brickIdx) => (
+                                <div key={brickIdx} className={`h-5 rounded ${brickIdx < count ? 'bg-amber-500' : 'bg-slate-700'}`} />
+                            ))}
+                        </div>
+                    </button>
+                ))}
+            </div>
+            {!running && <button onClick={resetGame} className="mt-4 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">다시 도전</button>}
+            <div className="mt-4 w-full flex justify-between px-3 py-2 rounded-xl bg-slate-800/60 border border-slate-700 text-xs text-slate-200">
+                <span>현재 점수: <strong className="text-amber-300">{score}</strong></span>
+                <span>최고점: <strong className="text-emerald-300">{highScore}</strong></span>
+            </div>
+            <button onClick={onBack} className="mt-3 px-4 py-2 rounded-lg border border-slate-600 bg-slate-800 text-slate-200 text-sm">나가기</button>
+        </div>
+    );
+};
+
+// ==========================================
+// Game 10: Match Rush (3매치 러시)
+// ==========================================
+const MatchRushGame: React.FC<GameComponentProps> = ({ onBack, onScoreChange, highScore }) => {
+    const SIZE = 6;
+    const TYPES = ['🔵', '🟢', '🟣', '🟠'];
+    const makeGrid = () => Array.from({ length: SIZE }, () => Array.from({ length: SIZE }, () => TYPES[Math.floor(Math.random() * TYPES.length)]));
+    const [grid, setGrid] = useState<string[][]>(() => makeGrid());
+    const [timeLeft, setTimeLeft] = useState(45);
+    const [score, setScore] = useState(0);
+    const [running, setRunning] = useState(true);
+
+    useInterval(() => {
+        if (!running) return;
+        setTimeLeft(prev => {
+            if (prev <= 1) {
+                setRunning(false);
+                return 0;
+            }
+            return prev - 1;
+        });
+    }, 1000);
+
+    const clickCell = (row: number, col: number) => {
+        if (!running) return;
+        const target = grid[row][col];
+        const visited = new Set<string>();
+        const stack: Array<[number, number]> = [[row, col]];
+        const group: Array<[number, number]> = [];
+        while (stack.length) {
+            const [r, c] = stack.pop()!;
+            const key = `${r}-${c}`;
+            if (visited.has(key)) continue;
+            visited.add(key);
+            if (r < 0 || c < 0 || r >= SIZE || c >= SIZE) continue;
+            if (grid[r][c] !== target) continue;
+            group.push([r, c]);
+            stack.push([r + 1, c], [r - 1, c], [r, c + 1], [r, c - 1]);
+        }
+        if (group.length < 3) return;
+
+        const next = grid.map(rowData => [...rowData]);
+        for (const [r, c] of group) next[r][c] = '';
+
+        for (let c = 0; c < SIZE; c++) {
+            const alive = [];
+            for (let r = SIZE - 1; r >= 0; r--) if (next[r][c] !== '') alive.push(next[r][c]);
+            for (let r = SIZE - 1; r >= 0; r--) {
+                next[r][c] = alive[SIZE - 1 - r] ?? TYPES[Math.floor(Math.random() * TYPES.length)];
+            }
+        }
+        setGrid(next);
+        setScore(prev => prev + group.length * group.length);
+    };
+
+    const resetGame = () => {
+        setGrid(makeGrid());
+        setTimeLeft(45);
+        setScore(0);
+        setRunning(true);
+    };
+
+    useEffect(() => {
+        onScoreChange(score);
+    }, [onScoreChange, score]);
+
+    return (
+        <div className="flex flex-col items-center bg-gradient-to-b from-slate-900 to-slate-900/95 border border-slate-700/70 rounded-2xl p-5 w-full max-w-md mx-auto shadow-[0_16px_36px_rgba(0,0,0,0.35)]">
+            <h3 className="text-xl font-semibold text-slate-100">💎 3매치 러시</h3>
+            <p className="text-xs text-slate-300 mt-1">남은 시간: {timeLeft}s</p>
+            <div className="mt-4 grid grid-cols-6 gap-1.5">
+                {grid.map((row, r) =>
+                    row.map((cell, c) => (
+                        <button key={`${r}-${c}`} onClick={() => clickCell(r, c)} className="w-10 h-10 rounded-lg bg-slate-800 border border-slate-700 text-lg">
+                            {cell}
+                        </button>
+                    ))
+                )}
+            </div>
+            {!running && <button onClick={resetGame} className="mt-4 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">다시 도전</button>}
+            <div className="mt-4 w-full flex justify-between px-3 py-2 rounded-xl bg-slate-800/60 border border-slate-700 text-xs text-slate-200">
+                <span>현재 점수: <strong className="text-amber-300">{score}</strong></span>
+                <span>최고점: <strong className="text-emerald-300">{highScore}</strong></span>
+            </div>
+            <button onClick={onBack} className="mt-3 px-4 py-2 rounded-lg border border-slate-600 bg-slate-800 text-slate-200 text-sm">나가기</button>
         </div>
     );
 };
@@ -889,7 +1345,7 @@ interface GameItem {
     title: string;
     description: string;
     icon: React.ReactNode;
-    component: React.FC<{ onBack: () => void }>;
+    component: React.FC<GameComponentProps>;
 }
 
 interface LoungeNewsItem {
@@ -976,6 +1432,7 @@ const toMobileNewsLink = (title: string) =>
 
 export const GameCenter: React.FC = () => {
     const LOUNGE_TAB_STORAGE_KEY = 'jkplus.lounge.activeTab';
+    const GAME_SCORE_STORAGE_KEY = 'jkplus.games.highScores.v1';
     const [activeGameId, setActiveGameId] = useState<string | null>(null);
     const [news, setNews] = useState<LoungeNewsItem[]>(FALLBACK_NEWS);
     const [isNewsLoading, setIsNewsLoading] = useState(true);
@@ -986,6 +1443,18 @@ export const GameCenter: React.FC = () => {
         return saved === 'games' ? 'games' : 'news';
     });
     const [selectedNews, setSelectedNews] = useState<LoungeNewsItem | null>(null);
+    const [gameHighScores, setGameHighScores] = useState<Record<string, number>>(() => {
+        const raw = localStorage.getItem(GAME_SCORE_STORAGE_KEY);
+        if (!raw) return {};
+        try {
+            const parsed = JSON.parse(raw);
+            if (!parsed || typeof parsed !== 'object') return {};
+            return parsed as Record<string, number>;
+        } catch {
+            return {};
+        }
+    });
+    const [gameLastScores, setGameLastScores] = useState<Record<string, number>>({});
 
     const GAMES: GameItem[] = [
         {
@@ -1022,6 +1491,41 @@ export const GameCenter: React.FC = () => {
             description: '가볍게 확인하는 오늘의 운세 카드. 쉬는 시간에 부담 없이 즐겨보세요.',
             icon: <span className="text-3xl">🍀</span>,
             component: LuckyGame
+        },
+        {
+            id: 'safety-quiz',
+            title: '안전 OX 퀴즈',
+            description: '현장 필수 안전 지식을 OX 퀴즈로 빠르게 점검해 보세요.',
+            icon: <span className="text-3xl">🛟</span>,
+            component: SafetyQuizGame
+        },
+        {
+            id: 'sports-shoot',
+            title: '승부차기 챌린지',
+            description: '타이밍 맞춰 슛! 간단하지만 몰입도 높은 스포츠 미니게임입니다.',
+            icon: <span className="text-3xl">⚽</span>,
+            component: SportsShootGame
+        },
+        {
+            id: 'memory-flip',
+            title: '카드 뒤집기',
+            description: '같은 카드를 찾아 제거하는 집중력 메모리 게임입니다.',
+            icon: <span className="text-3xl">🧠</span>,
+            component: MemoryFlipGame
+        },
+        {
+            id: 'brick-strike',
+            title: '벽돌깨기 라이트',
+            description: '시간 내 벽돌을 많이 깨면 높은 점수를 얻을 수 있습니다.',
+            icon: <span className="text-3xl">🧱</span>,
+            component: BrickStrikeGame
+        },
+        {
+            id: 'match-rush',
+            title: '3매치 러시',
+            description: '3개 이상 연결을 빠르게 찾아 점수를 쌓는 퍼즐 게임입니다.',
+            icon: <span className="text-3xl">💎</span>,
+            component: MatchRushGame
         }
     ];
 
@@ -1082,11 +1586,31 @@ export const GameCenter: React.FC = () => {
         localStorage.setItem(LOUNGE_TAB_STORAGE_KEY, activeLoungeTab);
     }, [activeLoungeTab]);
 
+    useEffect(() => {
+        localStorage.setItem(GAME_SCORE_STORAGE_KEY, JSON.stringify(gameHighScores));
+    }, [gameHighScores]);
+
+    const handleScoreChange = useCallback((gameId: string, score: number) => {
+        setGameLastScores(prev => {
+            if ((prev[gameId] ?? 0) === score) return prev;
+            return { ...prev, [gameId]: score };
+        });
+        setGameHighScores(prev => {
+            const currentHigh = prev[gameId] ?? 0;
+            if (score <= currentHigh) return prev;
+            return { ...prev, [gameId]: score };
+        });
+    }, []);
+
     if (activeGame) {
         const GameComponent = activeGame.component;
         return (
             <div className="animate-fadeIn">
-                <GameComponent onBack={() => setActiveGameId(null)} />
+                <GameComponent
+                    onBack={() => setActiveGameId(null)}
+                    onScoreChange={(score) => handleScoreChange(activeGame.id, score)}
+                    highScore={gameHighScores[activeGame.id] ?? 0}
+                />
             </div>
         );
     }
@@ -1216,6 +1740,14 @@ export const GameCenter: React.FC = () => {
                                     <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
                                         {game.description}
                                     </p>
+                                    <div className="mt-2 flex gap-2 text-[10px]">
+                                        <span className="px-2 py-0.5 rounded-full bg-slate-700/70 text-slate-200 border border-slate-600/70">
+                                            최고점 {gameHighScores[game.id] ?? 0}
+                                        </span>
+                                        <span className="px-2 py-0.5 rounded-full bg-slate-700/70 text-slate-200 border border-slate-600/70">
+                                            최근 {gameLastScores[game.id] ?? 0}
+                                        </span>
+                                    </div>
                                 </div>
                             </button>
                         ))}
