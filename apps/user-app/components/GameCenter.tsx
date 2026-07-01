@@ -1076,7 +1076,7 @@ export const GameCenter: React.FC = () => {
         <div className="animate-fadeIn">
             <div className="mb-6 text-center">
                 <h2 className="text-2xl md:text-3xl font-bold text-slate-100">🏗️ 인력 휴게실</h2>
-                <p className="text-slate-400 mt-2">대기 시간, 지루하지 않게 간단한 게임 한 판 어떠세요?</p>
+                <p className="text-slate-400 mt-2">현장에 필요한 뉴스를 먼저 확인하고, 원하실 때만 미니게임을 이용해 주세요.</p>
             </div>
 
             <div className="mb-6 bg-slate-800/40 border border-slate-700 rounded-xl p-5">
@@ -1148,7 +1148,7 @@ export const GameCenter: React.FC = () => {
                     className="w-full flex items-center justify-between text-left"
                 >
                     <div>
-                        <p className="text-sm font-bold text-slate-200">🎮 휴게실 게임</p>
+                        <p className="text-sm font-bold text-slate-200">🎮 선택형 미니게임</p>
                         <p className="text-xs text-slate-500 mt-0.5">뉴스 확인 후 짧게 즐길 수 있도록 접어두었습니다.</p>
                     </div>
                     <span className="text-xs font-bold text-amber-300">{isGameListExpanded ? '접기' : '펼치기'}</span>
