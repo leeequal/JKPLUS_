@@ -895,16 +895,17 @@ interface GameItem {
 interface LoungeNewsItem {
     title: string;
     link: string;
+    mobileLink: string;
     source?: string;
     pubDate?: string;
     description?: string;
 }
 
 const FALLBACK_NEWS: LoungeNewsItem[] = [
-    { title: '국내 건설 경기, 인프라·정비사업 중심으로 회복 흐름', link: 'https://news.google.com', source: '산업 브리핑', description: '건설 경기와 수주 흐름, 현장 운영 관련 주요 이슈를 요약합니다.' },
-    { title: '폭염·집중호우 대비 현장 안전관리 강화 권고', link: 'https://news.google.com', source: '안전 이슈', description: '작업자 보호와 우천·폭염 대응 중심의 현장 안전 소식입니다.' },
-    { title: '노무·정산 디지털화 확산으로 현장 운영 효율 개선', link: 'https://news.google.com', source: '디지털 전환', description: '노무·정산 자동화와 운영 효율화 트렌드를 다룹니다.' },
-    { title: '건설업 채용 시장, 숙련 인력 중심 수요 지속', link: 'https://news.google.com', source: '채용 동향', description: '채용 수요와 인력 매칭 이슈를 확인할 수 있습니다.' },
+    { title: '국내 건설 경기, 인프라·정비사업 중심으로 회복 흐름', link: 'https://news.google.com', mobileLink: 'https://m.search.naver.com/search.naver?where=m_news&query=%EA%B1%B4%EC%84%A4%20%EA%B2%BD%EA%B8%B0%20%EC%9D%B8%ED%94%84%EB%9D%BC', source: '산업 브리핑', description: '건설 경기와 수주 흐름, 현장 운영 관련 주요 이슈를 요약합니다.' },
+    { title: '폭염·집중호우 대비 현장 안전관리 강화 권고', link: 'https://news.google.com', mobileLink: 'https://m.search.naver.com/search.naver?where=m_news&query=%EA%B1%B4%EC%84%A4%20%ED%98%84%EC%9E%A5%20%ED%8F%AD%EC%97%BC%20%ED%98%B8%EC%9A%B0%20%EC%95%88%EC%A0%84', source: '안전 이슈', description: '작업자 보호와 우천·폭염 대응 중심의 현장 안전 소식입니다.' },
+    { title: '노무·정산 디지털화 확산으로 현장 운영 효율 개선', link: 'https://news.google.com', mobileLink: 'https://m.search.naver.com/search.naver?where=m_news&query=%EB%85%B8%EB%AC%B4%20%EC%A0%95%EC%82%B0%20%EB%94%94%EC%A7%80%ED%84%B8%ED%99%94', source: '디지털 전환', description: '노무·정산 자동화와 운영 효율화 트렌드를 다룹니다.' },
+    { title: '건설업 채용 시장, 숙련 인력 중심 수요 지속', link: 'https://news.google.com', mobileLink: 'https://m.search.naver.com/search.naver?where=m_news&query=%EA%B1%B4%EC%84%A4%20%EC%B1%84%EC%9A%A9%20%EC%88%99%EB%A0%A8%20%EC%9D%B8%EB%A0%A5', source: '채용 동향', description: '채용 수요와 인력 매칭 이슈를 확인할 수 있습니다.' },
 ];
 
 const NEWS_CATEGORIES = [
@@ -959,6 +960,9 @@ const getSnippet = (description?: string) => {
     return stripped.length > 110 ? `${stripped.slice(0, 110)}...` : stripped;
 };
 
+const toMobileNewsLink = (title: string) =>
+    `https://m.search.naver.com/search.naver?where=m_news&query=${encodeURIComponent(title)}`;
+
 export const GameCenter: React.FC = () => {
     const [activeGameId, setActiveGameId] = useState<string | null>(null);
     const [news, setNews] = useState<LoungeNewsItem[]>(FALLBACK_NEWS);
@@ -966,7 +970,6 @@ export const GameCenter: React.FC = () => {
     const [newsError, setNewsError] = useState<string | null>(null);
     const [activeNewsCategory, setActiveNewsCategory] = useState<NewsCategoryId>('construction');
     const [selectedNews, setSelectedNews] = useState<LoungeNewsItem | null>(null);
-    const [showWebPreview, setShowWebPreview] = useState(false);
     const [isGameListExpanded, setIsGameListExpanded] = useState(false);
 
     const GAMES: GameItem[] = [
@@ -1025,6 +1028,7 @@ export const GameCenter: React.FC = () => {
                     ? data.items.slice(0, 6).map((item: any) => ({
                         title: item.title as string,
                         link: item.link as string,
+                        mobileLink: toMobileNewsLink(item.title as string),
                         source: item.author || '주요 뉴스',
                         pubDate: item.pubDate as string,
                         description: stripHtml(item.description as string),
@@ -1104,7 +1108,6 @@ export const GameCenter: React.FC = () => {
                                 key={`${item.link}-top-${index}`}
                                 onClick={() => {
                                     setSelectedNews(item);
-                                    setShowWebPreview(false);
                                 }}
                                 className="text-left p-3 rounded-lg bg-slate-900 border border-slate-700 hover:border-amber-500/50 transition"
                             >
@@ -1124,7 +1127,6 @@ export const GameCenter: React.FC = () => {
                             <button
                                 onClick={() => {
                                     setSelectedNews(item);
-                                    setShowWebPreview(false);
                                 }}
                                 className="w-full text-left p-3 rounded-lg bg-slate-900/60 border border-slate-700 hover:border-amber-500/50 transition"
                             >
@@ -1199,12 +1201,14 @@ export const GameCenter: React.FC = () => {
                             </div>
 
                             <div className="mt-4 flex flex-wrap gap-2">
-                                <button
-                                    onClick={() => setShowWebPreview((prev) => !prev)}
+                                <a
+                                    href={selectedNews.mobileLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                     className="px-3 py-2 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white"
                                 >
-                                    {showWebPreview ? '요약 보기로 전환' : '앱 내 웹 미리보기'}
-                                </button>
+                                    모바일 뉴스로 보기
+                                </a>
                                 <button
                                     onClick={() => navigator.clipboard?.writeText(selectedNews.link)}
                                     className="px-3 py-2 text-xs font-bold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-100"
@@ -1220,19 +1224,9 @@ export const GameCenter: React.FC = () => {
                                     원문 새 탭으로 열기
                                 </a>
                             </div>
-
-                            {showWebPreview && (
-                                <div className="mt-4">
-                                    <iframe
-                                        title={selectedNews.title}
-                                        src={selectedNews.link}
-                                        className="w-full h-[52vh] rounded-xl border border-slate-700 bg-white"
-                                    />
-                                    <p className="text-[11px] text-slate-500 mt-2">
-                                        일부 언론사는 앱 내 미리보기를 차단할 수 있습니다. 그 경우 “원문 새 탭으로 열기”를 이용해 주세요.
-                                    </p>
-                                </div>
-                            )}
+                            <p className="text-[11px] text-slate-500 mt-3">
+                                가독성 문제를 줄이기 위해 앱 내 임베드 대신 모바일 뉴스 페이지로 이동하도록 변경했습니다.
+                            </p>
                         </div>
                     </div>
                 </div>
