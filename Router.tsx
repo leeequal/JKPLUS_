@@ -36,7 +36,7 @@ const workflow = [
   {
     step: '03',
     title: '정교한 구현',
-    description: '선택한 언어와 기술 스택에 맞춰 정확하고 읽기 쉬운 코드를 작성하고, 변경 사항에는 바이브 코딩 스타일의 한글 라인별 주석을 꼼꼼히 남깁니다.',
+    description: '선택한 언어와 기술 스택에 맞춰 정확하고 읽기 쉬운 코드를 작성하고, 변경 사항에는 한글 라인별 주석 중심의 작업 방식을 꼼꼼히 반영합니다.',
   },
   {
     step: '04',
@@ -98,7 +98,7 @@ const Router: React.FC = () => {
                 </div>
                 <div>
                   <dt className="text-sm text-slate-400">코딩 스타일</dt>
-                  <dd className="mt-1 text-base text-slate-200">코드 작성 및 변경 시 항상 한글 주석을 라인별로 남기는 바이브 코딩 방식</dd>
+                  <dd className="mt-1 text-base text-slate-200">코드 작성 및 변경 시 항상 한글 주석을 라인별로 남기는 작업 방식</dd>
                 </div>
               </dl>
             </div>
@@ -153,7 +153,7 @@ const Router: React.FC = () => {
         <section className="mt-12 rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
           <h2 className="text-3xl font-bold text-white">주석 규칙</h2>
           <p className="mt-4 text-sm leading-7 text-slate-300">
-            Programmer는 바이브 코딩 기반의 협업을 위해 코드를 새로 작성하거나 변경할 때 항상 한글 주석을 라인 바이 라인으로 남겨,
+            Programmer는 사용자가 말한 바이브 코딩 흐름을 살리기 위해 코드를 새로 작성하거나 변경할 때 항상 한글 주석을 라인별로 남겨,
             의도와 흐름을 누구나 즉시 이해할 수 있도록 만듭니다.
           </p>
         </section>
