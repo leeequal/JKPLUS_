@@ -975,12 +975,16 @@ const toMobileNewsLink = (title: string) =>
     `https://m.search.naver.com/search.naver?where=m_news&query=${encodeURIComponent(title)}`;
 
 export const GameCenter: React.FC = () => {
+    const LOUNGE_TAB_STORAGE_KEY = 'jkplus.lounge.activeTab';
     const [activeGameId, setActiveGameId] = useState<string | null>(null);
     const [news, setNews] = useState<LoungeNewsItem[]>(FALLBACK_NEWS);
     const [isNewsLoading, setIsNewsLoading] = useState(true);
     const [newsError, setNewsError] = useState<string | null>(null);
     const [activeNewsCategory, setActiveNewsCategory] = useState<NewsCategoryId>('general');
-    const [activeLoungeTab, setActiveLoungeTab] = useState<'news' | 'games'>('news');
+    const [activeLoungeTab, setActiveLoungeTab] = useState<'news' | 'games'>(() => {
+        const saved = localStorage.getItem(LOUNGE_TAB_STORAGE_KEY);
+        return saved === 'games' ? 'games' : 'news';
+    });
     const [selectedNews, setSelectedNews] = useState<LoungeNewsItem | null>(null);
 
     const GAMES: GameItem[] = [
@@ -1074,6 +1078,10 @@ export const GameCenter: React.FC = () => {
         };
     }, [activeNewsCategory]);
 
+    useEffect(() => {
+        localStorage.setItem(LOUNGE_TAB_STORAGE_KEY, activeLoungeTab);
+    }, [activeLoungeTab]);
+
     if (activeGame) {
         const GameComponent = activeGame.component;
         return (
@@ -1086,7 +1094,7 @@ export const GameCenter: React.FC = () => {
     return (
         <div className="animate-fadeIn">
             <div className="mb-6 text-center">
-                <h2 className="text-2xl md:text-3xl font-bold text-slate-100">🏗️ 인력 휴게실</h2>
+                <h2 className="text-2xl md:text-3xl font-bold text-slate-100">🏗️ 인력 라운지</h2>
                 <p className="text-slate-400 mt-2">현장에 필요한 뉴스를 먼저 확인하고, 원하실 때만 미니게임을 이용해 주세요.</p>
             </div>
 
@@ -1099,7 +1107,7 @@ export const GameCenter: React.FC = () => {
                             : 'text-slate-300 hover:bg-slate-800'
                     }`}
                 >
-                    📰 휴게실 뉴스
+                    📰 뉴스 브리핑
                 </button>
                 <button
                     onClick={() => setActiveLoungeTab('games')}
@@ -1109,7 +1117,7 @@ export const GameCenter: React.FC = () => {
                             : 'text-slate-300 hover:bg-slate-800'
                     }`}
                 >
-                    🎮 미니게임
+                    🎮 게임
                 </button>
             </div>
 

@@ -837,7 +837,7 @@ const EmployerApp: React.FC = () => {
                             }`}
                         >
                             <Sparkles className="h-4.5 w-4.5 mb-1.5 text-pink-500" />
-                            <span>휴게실 뉴스</span>
+                            <span>휴게실</span>
                         </button>
                         <button
                             onClick={() => setView('notices')}
