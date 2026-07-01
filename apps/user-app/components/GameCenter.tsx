@@ -892,8 +892,24 @@ interface GameItem {
     component: React.FC<{ onBack: () => void }>;
 }
 
+interface LoungeNewsItem {
+    title: string;
+    link: string;
+    source?: string;
+}
+
+const FALLBACK_NEWS: LoungeNewsItem[] = [
+    { title: '국내 건설 경기, 인프라·정비사업 중심으로 회복 흐름', link: 'https://news.google.com', source: '산업 브리핑' },
+    { title: '폭염·집중호우 대비 현장 안전관리 강화 권고', link: 'https://news.google.com', source: '안전 이슈' },
+    { title: '노무·정산 디지털화 확산으로 현장 운영 효율 개선', link: 'https://news.google.com', source: '디지털 전환' },
+    { title: '건설업 채용 시장, 숙련 인력 중심 수요 지속', link: 'https://news.google.com', source: '채용 동향' },
+];
+
 export const GameCenter: React.FC = () => {
     const [activeGameId, setActiveGameId] = useState<string | null>(null);
+    const [news, setNews] = useState<LoungeNewsItem[]>(FALLBACK_NEWS);
+    const [isNewsLoading, setIsNewsLoading] = useState(true);
+    const [newsError, setNewsError] = useState<string | null>(null);
 
     const GAMES: GameItem[] = [
         {
@@ -934,6 +950,46 @@ export const GameCenter: React.FC = () => {
     ];
 
     const activeGame = GAMES.find(g => g.id === activeGameId);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const fetchNews = async () => {
+            try {
+                setIsNewsLoading(true);
+                const rssUrl = encodeURIComponent('https://news.google.com/rss/search?q=건설+현장+안전+채용&hl=ko&gl=KR&ceid=KR:ko');
+                const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`);
+                if (!response.ok) throw new Error(`status ${response.status}`);
+                const data = await response.json();
+
+                const items = Array.isArray(data?.items)
+                    ? data.items.slice(0, 6).map((item: any) => ({
+                        title: item.title as string,
+                        link: item.link as string,
+                        source: item.author || '주요 뉴스',
+                    }))
+                    : [];
+
+                if (isMounted && items.length > 0) {
+                    setNews(items);
+                    setNewsError(null);
+                } else if (isMounted) {
+                    setNewsError('실시간 뉴스가 없어 기본 소식을 표시합니다.');
+                }
+            } catch (error) {
+                console.error('휴게실 뉴스 조회 실패', error);
+                if (isMounted) setNewsError('실시간 뉴스 조회에 실패하여 기본 소식을 표시합니다.');
+            } finally {
+                if (isMounted) setIsNewsLoading(false);
+            }
+        };
+
+        void fetchNews();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     if (activeGame) {
         const GameComponent = activeGame.component;
@@ -979,6 +1035,29 @@ export const GameCenter: React.FC = () => {
                         <p className="text-sm font-medium">새로운 게임 준비 중...</p>
                     </div>
                 </div>
+            </div>
+
+            <div className="mt-6 bg-slate-800/40 border border-slate-700 rounded-xl p-5">
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-bold text-slate-100">📰 주요 뉴스 브리핑</h3>
+                    {isNewsLoading && <span className="text-xs text-slate-400">불러오는 중...</span>}
+                </div>
+                {newsError && <p className="text-xs text-amber-400 mb-2">{newsError}</p>}
+                <ul className="space-y-2">
+                    {news.map((item, index) => (
+                        <li key={`${item.link}-${index}`}>
+                            <a
+                                href={item.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block p-3 rounded-lg bg-slate-900/60 border border-slate-700 hover:border-amber-500/50 transition"
+                            >
+                                <p className="text-sm text-slate-200 hover:text-amber-300 transition-colors">{item.title}</p>
+                                <p className="text-[11px] text-slate-500 mt-1">{item.source || '주요 뉴스'}</p>
+                            </a>
+                        </li>
+                    ))}
+                </ul>
             </div>
         </div>
     );

@@ -4,6 +4,11 @@ type WeatherTone = 'warm' | 'cool' | 'admin';
 
 interface WeatherWidgetProps {
   tone?: WeatherTone;
+  fixedLocation?: {
+    name: string;
+    latitude: number;
+    longitude: number;
+  };
 }
 
 interface DailyForecast {
@@ -51,22 +56,17 @@ const toneClassMap: Record<WeatherTone, string> = {
   admin: 'border-sky-900 bg-sky-950/30 text-sky-300',
 };
 
-export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ tone = 'warm' }) => {
+export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ tone = 'warm', fixedLocation }) => {
   const [region, setRegion] = useState('내 위치');
   const [forecast, setForecast] = useState<DailyForecast[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setError('위치 기능 미지원');
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async ({ coords }) => {
-        try {
-          const { latitude, longitude } = coords;
-
+    const loadWeather = async (latitude: number, longitude: number, fixedRegionName?: string) => {
+      try {
+        if (fixedRegionName) {
+          setRegion(fixedRegionName);
+        } else {
           const reverseRes = await fetch(
             `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${latitude}&longitude=${longitude}&language=ko&count=1`
           );
@@ -77,33 +77,49 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ tone = 'warm' }) =
               setRegion(place.admin2 ? `${place.admin2} ${place.name}` : place.name);
             }
           }
-
-          const weatherRes = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=2&timezone=auto`
-          );
-          if (!weatherRes.ok) {
-            throw new Error(`forecast status ${weatherRes.status}`);
-          }
-
-          const weatherJson = await weatherRes.json();
-          const dates: string[] = weatherJson?.daily?.time ?? [];
-          const codes: number[] = weatherJson?.daily?.weather_code ?? [];
-          const maxTemps: number[] = weatherJson?.daily?.temperature_2m_max ?? [];
-          const minTemps: number[] = weatherJson?.daily?.temperature_2m_min ?? [];
-
-          const nextTwoDays: DailyForecast[] = dates.slice(0, 2).map((date, index) => ({
-            date,
-            weatherCode: codes[index],
-            maxTemp: Math.round(maxTemps[index]),
-            minTemp: Math.round(minTemps[index]),
-          }));
-
-          setForecast(nextTwoDays);
-          setError(null);
-        } catch (fetchError) {
-          console.error('날씨 정보를 가져오지 못했습니다.', fetchError);
-          setError('날씨 조회 실패');
         }
+
+        const weatherRes = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=2&timezone=auto`
+        );
+        if (!weatherRes.ok) {
+          throw new Error(`forecast status ${weatherRes.status}`);
+        }
+
+        const weatherJson = await weatherRes.json();
+        const dates: string[] = weatherJson?.daily?.time ?? [];
+        const codes: number[] = weatherJson?.daily?.weather_code ?? [];
+        const maxTemps: number[] = weatherJson?.daily?.temperature_2m_max ?? [];
+        const minTemps: number[] = weatherJson?.daily?.temperature_2m_min ?? [];
+
+        const nextTwoDays: DailyForecast[] = dates.slice(0, 2).map((date, index) => ({
+          date,
+          weatherCode: codes[index],
+          maxTemp: Math.round(maxTemps[index]),
+          minTemp: Math.round(minTemps[index]),
+        }));
+
+        setForecast(nextTwoDays);
+        setError(null);
+      } catch (fetchError) {
+        console.error('날씨 정보를 가져오지 못했습니다.', fetchError);
+        setError('날씨 조회 실패');
+      }
+    };
+
+    if (fixedLocation) {
+      void loadWeather(fixedLocation.latitude, fixedLocation.longitude, fixedLocation.name);
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      setError('위치 기능 미지원');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        void loadWeather(coords.latitude, coords.longitude);
       },
       (geoError) => {
         console.error('위치 정보를 가져오지 못했습니다.', geoError);
@@ -111,7 +127,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ tone = 'warm' }) =
       },
       { timeout: 10000, maximumAge: 10 * 60 * 1000 }
     );
-  }, []);
+  }, [fixedLocation]);
 
   return (
     <div className={`rounded-xl border px-3 py-2 text-xs ${toneClassMap[tone]}`}>

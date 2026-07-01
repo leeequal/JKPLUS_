@@ -105,7 +105,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, currentView, s
                      <span className="text-xs font-extrabold text-slate-500 uppercase tracking-widest">Platform Core Console v3.1</span>
                      <div className="flex items-center gap-3">
                         <div className="hidden xl:block">
-                            <WeatherWidget tone="admin" />
+                            <WeatherWidget tone="admin" fixedLocation={{ name: '서울', latitude: 37.5665, longitude: 126.978 }} />
                         </div>
                         <div className="flex items-center space-x-2 bg-slate-900/60 border border-slate-900 px-3 py-1.5 rounded-xl">
                             <span className="w-2 h-2 bg-sky-400 rounded-full animate-pulse" />
@@ -116,7 +116,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, currentView, s
                      </div>
                 </header>
                 <div className="px-6 pt-4 xl:hidden">
-                    <WeatherWidget tone="admin" />
+                    <WeatherWidget tone="admin" fixedLocation={{ name: '서울', latitude: 37.5665, longitude: 126.978 }} />
                 </div>
                 <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
                     {children}
