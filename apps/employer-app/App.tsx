@@ -9,6 +9,7 @@ import { Notice, NOTICES_DATA } from '../user-app/data/notices';
 import { SettingsView } from '../user-app/components/SettingsView';
 import { CalendarView } from './components/CalendarView';
 import { GameCenter } from '../user-app/components/GameCenter';
+import { WeatherWidget } from '../shared/components/WeatherWidget';
 
 const formatPhoneNumber = (value: string): string => {
     const cleaned = value.replace(/\D/g, '');
@@ -48,14 +49,24 @@ const Header = ({ currentUser, onLogout }: any) => (
                 </div>
             </div>
             {currentUser && (
-                <button 
-                    onClick={onLogout} 
-                    className="px-3 py-1.5 text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-850 text-slate-700 dark:text-slate-300 rounded-xl transition-all border border-slate-250 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm"
-                >
-                    로그아웃
-                </button>
+                <div className="flex items-center">
+                    <div className="hidden md:block mr-3">
+                        <WeatherWidget tone="cool" />
+                    </div>
+                    <button 
+                        onClick={onLogout} 
+                        className="px-3 py-1.5 text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-850 text-slate-700 dark:text-slate-300 rounded-xl transition-all border border-slate-250 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm"
+                    >
+                        로그아웃
+                    </button>
+                </div>
             )}
         </div>
+        {currentUser && (
+            <div className="container mx-auto px-4 pb-3 md:hidden max-w-lg">
+                <WeatherWidget tone="cool" />
+            </div>
+        )}
     </header>
 );
 

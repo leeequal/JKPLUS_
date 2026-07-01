@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { WeatherWidget } from '../../shared/components/WeatherWidget';
 
 interface HeaderProps {
   isAuthenticated: boolean;
@@ -49,6 +50,9 @@ export const Header: React.FC<HeaderProps> = ({ isAuthenticated, currentUser, on
           </div>
           {isAuthenticated && (
             <div className="flex items-center">
+              <div className="hidden md:block mr-3">
+                <WeatherWidget tone="warm" />
+              </div>
               <button 
                 onClick={onLogout}
                 className="px-4 py-2 text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-850 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-xl transition-all border border-slate-250 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm"
@@ -58,6 +62,11 @@ export const Header: React.FC<HeaderProps> = ({ isAuthenticated, currentUser, on
             </div>
           )}
         </div>
+        {isAuthenticated && (
+          <div className="md:hidden mt-3">
+            <WeatherWidget tone="warm" />
+          </div>
+        )}
       </div>
     </header>
   );
