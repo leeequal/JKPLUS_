@@ -246,103 +246,106 @@ const Router: React.FC = () => {
         );
     }
 
+    const modeCards: Array<{
+        view: 'user' | 'employer' | 'admin';
+        badge: string;
+        title: string;
+        description: string;
+        actionText: string;
+        accent: string;
+        hoverBorder: string;
+        hoverText: string;
+        icon: React.ReactNode;
+    }> = [
+        {
+            view: 'user',
+            badge: 'Worker Interface',
+            title: '근로자용 앱',
+            description: '주변 현장을 빠르게 탐색하고 지원하며, 출퇴근 인증과 급여 현황을 한 번에 확인할 수 있습니다.',
+            actionText: '시작하기',
+            accent: 'text-amber-400',
+            hoverBorder: 'hover:border-amber-400/40',
+            hoverText: 'group-hover:text-amber-300',
+            icon: <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        },
+        {
+            view: 'employer',
+            badge: 'Employer Portal',
+            title: '구인자용 앱',
+            description: '현장 공고부터 인력 선발, 진행 상황 관리까지 실시간으로 운영하는 구인 전용 워크플로우입니다.',
+            actionText: '시작하기',
+            accent: 'text-indigo-300',
+            hoverBorder: 'hover:border-indigo-400/40',
+            hoverText: 'group-hover:text-indigo-300',
+            icon: <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5h1.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293h3.172a1 1 0 00.707-.293l2.414-2.414a1 1 0 01.707-.293H21" />
+        },
+        {
+            view: 'admin',
+            badge: 'Admin Operations',
+            title: '관리자용 시스템',
+            description: '회원 승인, 권한 관리, 출역 통제, 정산 검토를 담당하는 통합 운영 콘솔입니다.',
+            actionText: '접속하기',
+            accent: 'text-sky-300',
+            hoverBorder: 'hover:border-sky-400/40',
+            hoverText: 'group-hover:text-sky-300',
+            icon: <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+        }
+    ];
+
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-300 flex items-center justify-center p-4 sm:p-6 font-sans relative overflow-hidden">
-            {/* Subtle premium background glow effects */}
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-amber-500/5 blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none" />
+        <div className="min-h-screen bg-slate-950 text-slate-200 flex items-center justify-center p-4 sm:p-6 font-sans relative overflow-hidden">
+            <div className="absolute top-[-15%] left-[-10%] w-[34rem] h-[34rem] rounded-full bg-amber-500/10 blur-[140px] pointer-events-none" />
+            <div className="absolute top-[20%] right-[-12%] w-[32rem] h-[32rem] rounded-full bg-indigo-500/10 blur-[140px] pointer-events-none" />
+            <div className="absolute bottom-[-18%] left-[35%] w-[30rem] h-[30rem] rounded-full bg-cyan-500/10 blur-[140px] pointer-events-none" />
 
             <div className="max-w-6xl w-full animate-fadeIn relative z-10">
-                <div className="text-center mb-14">
-                    <div className="inline-flex items-center justify-center p-4 bg-gradient-to-tr from-amber-500 via-orange-500 to-indigo-600 rounded-3xl shadow-xl shadow-orange-500/10 mb-6 border border-white/10">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5h1.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293h3.172a1 1 0 00.707-.293l2.414-2.414a1 1 0 01.707-.293H21" />
-                        </svg>
+                <section className="text-center mb-12">
+                    <div className="inline-flex items-center gap-2 mb-5 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold tracking-wide text-slate-300 backdrop-blur-md">
+                        <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                        SMART FIELD MATCHING SUITE
                     </div>
                     <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-slate-400 mb-4 tracking-tight">
                         건설 인력 매칭 플랫폼
                     </h1>
-                    <p className="text-base md:text-lg text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed">
-                        현장과 정밀한 인력을 연결하는 2026 차세대 매칭 엔진. <br className="hidden md:block"/>
-                        채용, 간편 계약, 출퇴근 관리부터 자동 급여 정산까지 통합 운영하십시오.
+                    <p className="text-sm md:text-base text-slate-400 max-w-3xl mx-auto font-medium leading-relaxed">
+                        최근 앱 트렌드를 반영한 카드형 워크플로우 UI로
+                        <br className="hidden md:block" />
+                        근로자 · 구인자 · 관리자 운영을 빠르게 시작하세요.
                     </p>
-                </div>
- 
-                <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-                    {/* User App Card */}
-                    <button 
-                        onClick={() => setView('user')}
-                        className="group relative bg-slate-900/50 hover:bg-slate-900 backdrop-blur-sm border border-slate-800/80 hover:border-amber-500/40 rounded-3xl p-8 text-left transition-all duration-300 hover:shadow-2xl hover:shadow-amber-500/5 flex flex-col h-full overflow-hidden"
-                    >
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition-all duration-300" />
-                        <div className="mb-6 inline-block p-3.5 bg-slate-850 border border-slate-800 rounded-2xl group-hover:scale-110 group-hover:border-amber-500/20 transition-all duration-300">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                        </div>
-                        <span className="text-[10px] uppercase tracking-wider font-extrabold text-amber-500 mb-1">Worker Interface</span>
-                        <h2 className="text-2xl font-bold text-white mb-2.5 group-hover:text-amber-400 transition-colors">근로자용 앱</h2>
-                        <p className="text-slate-400 text-sm leading-relaxed mb-8 flex-grow">
-                            내 주변 최신 현장을 실시간으로 검색하고 지원하세요. 
-                            스마트 간편 근로계약, 편리한 GPS 출퇴근 인증, 실시간 급여 보드를 제공합니다.
-                        </p>
-                        <div className="flex items-center text-amber-400 font-bold text-sm mt-auto gap-1">
-                            <span>시작하기</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 group-hover:translate-x-1.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                            </svg>
-                        </div>
-                    </button>
- 
-                    {/* Employer App Card */}
-                    <button 
-                        onClick={() => setView('employer')}
-                        className="group relative bg-slate-900/50 hover:bg-slate-900 backdrop-blur-sm border border-slate-800/80 hover:border-indigo-500/40 rounded-3xl p-8 text-left transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/5 flex flex-col h-full overflow-hidden"
-                    >
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-2xl group-hover:bg-indigo-500/10 transition-all duration-300" />
-                        <div className="mb-6 inline-block p-3.5 bg-slate-850 border border-slate-800 rounded-2xl group-hover:scale-110 group-hover:border-indigo-500/20 transition-all duration-300">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5h1.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293h3.172a1 1 0 00.707-.293l2.414-2.414a1 1 0 01.707-.293H21" />
-                            </svg>
-                        </div>
-                        <span className="text-[10px] uppercase tracking-wider font-extrabold text-indigo-400 mb-1">Employer Portal</span>
-                        <h2 className="text-2xl font-bold text-white mb-2.5 group-hover:text-indigo-400 transition-colors">구인자용 앱</h2>
-                        <p className="text-slate-400 text-sm leading-relaxed mb-8 flex-grow">
-                            스마트 건설 현장을 즉시 등록하고 정밀 매칭 인력을 신속히 공고하세요. 
-                            실시간 인력 충원 현황, 현장 도착 인증, 일용직 대장 출석표를 관리합니다.
-                        </p>
-                        <div className="flex items-center text-indigo-400 font-bold text-sm mt-auto gap-1">
-                            <span>시작하기</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 group-hover:translate-x-1.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                            </svg>
-                        </div>
-                    </button>
- 
-                    {/* Admin App Card */}
-                    <button 
-                        onClick={() => setView('admin')}
-                        className="group relative bg-slate-900/50 hover:bg-slate-900 backdrop-blur-sm border border-slate-800/80 hover:border-sky-500/40 rounded-3xl p-8 text-left transition-all duration-300 hover:shadow-2xl hover:shadow-sky-500/5 flex flex-col h-full overflow-hidden"
-                    >
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-sky-500/5 rounded-full blur-2xl group-hover:bg-sky-500/10 transition-all duration-300" />
-                        <div className="mb-6 inline-block p-3.5 bg-slate-850 border border-slate-800 rounded-2xl group-hover:scale-110 group-hover:border-sky-500/20 transition-all duration-300">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                            </svg>
-                        </div>
-                        <span className="text-[10px] uppercase tracking-wider font-extrabold text-sky-400 mb-1">Admin Operations</span>
-                        <h2 className="text-2xl font-bold text-white mb-2.5 group-hover:text-sky-400 transition-colors">관리자용 시스템</h2>
-                        <p className="text-slate-400 text-sm leading-relaxed mb-8 flex-grow">
-                            광대역 통합 배정 통제판, 실시간 가입 승인 검토, 고성능 노무 회계 및 노임 급여 지급 대장 등 전체 비즈니스 지표를 관리하는 최첨단 콘솔입니다.
-                        </p>
-                        <div className="flex items-center text-sky-400 font-bold text-sm mt-auto gap-1">
-                            <span>접속하기</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 group-hover:translate-x-1.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                            </svg>
-                        </div>
-                    </button>
-                </div>
+                    <div className="mt-7 grid grid-cols-2 md:grid-cols-4 gap-2.5 max-w-2xl mx-auto text-xs">
+                        <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">모바일 우선 UX</div>
+                        <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">글래스 카드 인터랙션</div>
+                        <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">빠른 진입 동선</div>
+                        <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">역할 기반 분리</div>
+                    </div>
+                </section>
+
+                <section className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto">
+                    {modeCards.map((card) => (
+                        <button
+                            key={card.view}
+                            onClick={() => setView(card.view)}
+                            className={`group relative rounded-3xl p-[1px] bg-gradient-to-b from-white/15 to-white/0 ${card.hoverBorder} transition-all duration-300`}
+                        >
+                            <div className="h-full rounded-[calc(1.5rem-1px)] bg-slate-900/75 backdrop-blur-xl border border-white/5 p-7 text-left transition-all duration-300 group-hover:bg-slate-900/90 group-hover:-translate-y-1 group-hover:shadow-2xl">
+                                <div className="mb-5 inline-flex rounded-2xl border border-white/10 bg-white/5 p-3.5 transition-transform duration-300 group-hover:scale-105">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${card.accent}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                                        {card.icon}
+                                    </svg>
+                                </div>
+                                <span className={`text-[10px] uppercase tracking-wider font-extrabold ${card.accent}`}>{card.badge}</span>
+                                <h2 className={`mt-1 text-2xl font-bold text-white ${card.hoverText} transition-colors`}>{card.title}</h2>
+                                <p className="mt-3 text-slate-400 text-sm leading-relaxed min-h-[84px]">{card.description}</p>
+                                <div className={`mt-6 inline-flex items-center gap-1 text-sm font-bold ${card.accent}`}>
+                                    <span>{card.actionText}</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </button>
+                    ))}
+                </section>
  
                 {/* Google Docs 상세 구현 설명서 내보내기 카드 */}
                 <div className="mt-14 max-w-5xl mx-auto bg-slate-900/40 backdrop-blur-md border border-slate-800 rounded-3xl p-6 md:p-8 transition-all duration-300 shadow-xl relative overflow-hidden">
