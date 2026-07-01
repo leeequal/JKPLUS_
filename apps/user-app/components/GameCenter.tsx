@@ -295,7 +295,7 @@ const OmokGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 )}
             </div>
             
-            <div className="mt-4 flex justify-center gap-4 text-sm font-medium text-slate-400 w-full">
+            <div className="mt-4 flex justify-center gap-4 text-sm font-medium text-slate-300 w-full">
                 <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors ${turn === BLACK ? 'bg-slate-800 text-amber-300 border border-amber-500/40' : 'border border-transparent'}`}>
                     <div className="w-3 h-3 rounded-full bg-black border border-slate-600"></div> 나 (흑)
                 </div>
@@ -800,7 +800,7 @@ const ReactionGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     <p className="text-3xl font-bold text-amber-400">{score} ms</p>
                 </div>
             )}
-            <div className="mt-8 text-sm text-slate-400">
+            <div className="mt-8 text-sm text-slate-200/90">
                 작업 현장에서는 빠른 반응속도가 생명입니다!<br/>초록색 화면이 뜨자마자 화면을 터치하세요.
             </div>
             <button
@@ -858,7 +858,7 @@ const LuckyGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     <p className="text-lg font-semibold text-amber-200">{result}</p>
                 </div>
             ) : (
-                <p className="text-slate-400">선물 상자를 눌러 오늘의 운세를 확인하세요!</p>
+                <p className="text-slate-200/90">선물 상자를 눌러 오늘의 운세를 확인하세요!</p>
             )}
 
             <div className="mt-8 flex gap-4">
@@ -1095,7 +1095,7 @@ export const GameCenter: React.FC = () => {
         <div className="animate-fadeIn">
             <div className="mb-6 text-center">
                 <h2 className="text-2xl md:text-3xl font-bold text-slate-100">🏗️ 인력 라운지</h2>
-                <p className="text-slate-400 mt-2">현장에 필요한 뉴스를 먼저 확인하고, 원하실 때만 미니게임을 이용해 주세요.</p>
+                <p className="text-slate-300 mt-2">현장에 필요한 뉴스를 먼저 확인하고, 원하실 때만 미니게임을 이용해 주세요.</p>
             </div>
 
             <div className="mb-5 grid grid-cols-2 gap-2 rounded-xl border border-slate-700 bg-slate-900/70 p-1.5">
@@ -1133,7 +1133,7 @@ export const GameCenter: React.FC = () => {
                                 className={`px-3 py-1.5 rounded-full text-xs font-bold border transition ${
                                     activeNewsCategory === category.id
                                         ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
-                                        : 'bg-slate-900/60 border-slate-700 text-slate-400 hover:text-slate-200'
+                                        : 'bg-slate-900/60 border-slate-700 text-slate-300 hover:text-white'
                                 }`}
                             >
                                 {category.label}
@@ -1141,7 +1141,7 @@ export const GameCenter: React.FC = () => {
                         ))}
                     </div>
                 </div>
-                {isNewsLoading && <p className="text-xs text-slate-400 mb-2">불러오는 중...</p>}
+                {isNewsLoading && <p className="text-xs text-slate-300 mb-2">불러오는 중...</p>}
                 {newsError && <p className="text-xs text-amber-400 mb-2">{newsError}</p>}
                 <div className="mb-3">
                     <p className="text-xs font-bold text-slate-300 mb-2">오늘의 핵심 3건</p>
@@ -1156,10 +1156,10 @@ export const GameCenter: React.FC = () => {
                             >
                                 <div className="flex items-center justify-between mb-1.5">
                                     <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300">{getNewsTag(item.title)}</span>
-                                    <span className="text-[10px] text-slate-500">{formatRelativeTime(item.pubDate)}</span>
+                                    <span className="text-[10px] text-slate-300">{formatRelativeTime(item.pubDate)}</span>
                                 </div>
                                 <p className="text-sm font-semibold text-slate-100 leading-snug">{item.title}</p>
-                                <p className="text-[11px] text-slate-400 mt-1">{getSnippet(item.description)}</p>
+                                <p className="text-[11px] text-slate-300 mt-1">{getSnippet(item.description)}</p>
                             </button>
                         ))}
                     </div>
@@ -1175,10 +1175,10 @@ export const GameCenter: React.FC = () => {
                             >
                                     <div className="flex items-center gap-2 mb-1">
                                         <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-slate-700 text-slate-200">{getNewsTag(item.title)}</span>
-                                        <span className="text-[10px] text-slate-500">{formatRelativeTime(item.pubDate)}</span>
+                                        <span className="text-[10px] text-slate-300">{formatRelativeTime(item.pubDate)}</span>
                                     </div>
                                     <p className="text-sm text-slate-200 hover:text-amber-300 transition-colors">{item.title}</p>
-                                    <p className="text-[11px] text-slate-500 mt-1">{item.source || '주요 뉴스'} {formatNewsDate(item.pubDate) ? `· ${formatNewsDate(item.pubDate)}` : ''}</p>
+                                    <p className="text-[11px] text-slate-300 mt-1">{item.source || '주요 뉴스'} {formatNewsDate(item.pubDate) ? `· ${formatNewsDate(item.pubDate)}` : ''}</p>
                                 </button>
                         </li>
                     ))}
@@ -1191,7 +1191,7 @@ export const GameCenter: React.FC = () => {
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-slate-500/40 to-transparent" />
                 <div className="mb-4">
                     <p className="text-sm sm:text-base font-semibold text-slate-100 tracking-tight">🎮 선택형 미니게임</p>
-                    <p className="text-xs sm:text-sm text-slate-400 mt-1">짧게 쉬고 싶을 때 바로 실행하실 수 있습니다.</p>
+                    <p className="text-xs sm:text-sm text-slate-300 mt-1">짧게 쉬고 싶을 때 바로 실행하실 수 있습니다.</p>
                 </div>
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                         {GAMES.map(game => (
@@ -1213,7 +1213,7 @@ export const GameCenter: React.FC = () => {
                                             빠른 플레이
                                         </span>
                                     </div>
-                                    <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+                                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
                                         {game.description}
                                     </p>
                                 </div>
@@ -1238,7 +1238,7 @@ export const GameCenter: React.FC = () => {
 
                         <div className="flex-1 overflow-y-auto p-4">
                             <h4 className="text-lg font-bold text-white leading-snug">{selectedNews.title}</h4>
-                            <p className="text-xs text-slate-400 mt-2">{selectedNews.source || '주요 뉴스'} {formatNewsDate(selectedNews.pubDate) ? `· ${formatNewsDate(selectedNews.pubDate)}` : ''}</p>
+                            <p className="text-xs text-slate-300 mt-2">{selectedNews.source || '주요 뉴스'} {formatNewsDate(selectedNews.pubDate) ? `· ${formatNewsDate(selectedNews.pubDate)}` : ''}</p>
 
                             <div className="mt-4 bg-slate-800/70 border border-slate-700 rounded-xl p-4">
                                 <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-wrap">{stripHtml(selectedNews.description)}</p>
@@ -1268,7 +1268,7 @@ export const GameCenter: React.FC = () => {
                                     원문 새 탭으로 열기
                                 </a>
                             </div>
-                            <p className="text-[11px] text-slate-500 mt-3">
+                            <p className="text-[11px] text-slate-300 mt-3">
                                 가독성 문제를 줄이기 위해 앱 내 임베드 대신 모바일 뉴스 페이지로 이동하도록 변경했습니다.
                             </p>
                         </div>
