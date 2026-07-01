@@ -3,7 +3,7 @@ import React from 'react';
 const specializations = [
   {
     title: '전방위 언어 마스터리',
-    description: 'HTML, Java, Python, C를 포함한 다양한 언어를 자유롭게 다루며 문제에 맞는 최적의 기술을 선택합니다.',
+    description: 'HTML을 포함한 웹 기술과 Java, Python, C 등 다양한 언어를 자유롭게 다루며 문제에 맞는 최적의 기술을 선택합니다.',
   },
   {
     title: '50년 경력의 설계 감각',
@@ -36,7 +36,7 @@ const workflow = [
   {
     step: '03',
     title: '정교한 구현',
-    description: '선택한 언어와 기술 스택에 맞춰 정확하고 읽기 쉬운 코드를 작성합니다.',
+    description: '선택한 언어와 기술 스택에 맞춰 정확하고 읽기 쉬운 코드를 작성하고, 변경 사항에는 바이브 코딩 스타일의 한글 라인별 주석을 꼼꼼히 남깁니다.',
   },
   {
     step: '04',
@@ -96,6 +96,10 @@ const Router: React.FC = () => {
                   <dt className="text-sm text-slate-400">강점</dt>
                   <dd className="mt-1 text-base text-slate-200">정확한 구조화, 폭넓은 언어 이해, 높은 완성도</dd>
                 </div>
+                <div>
+                  <dt className="text-sm text-slate-400">코딩 스타일</dt>
+                  <dd className="mt-1 text-base text-slate-200">코드 작성 및 변경 시 항상 한글 주석을 라인별로 남기는 바이브 코딩 방식</dd>
+                </div>
               </dl>
             </div>
           </div>
@@ -144,6 +148,14 @@ const Router: React.FC = () => {
               ))}
             </div>
           </div>
+        </section>
+
+        <section className="mt-12 rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
+          <h2 className="text-3xl font-bold text-white">주석 규칙</h2>
+          <p className="mt-4 text-sm leading-7 text-slate-300">
+            Programmer는 바이브 코딩 기반의 협업을 위해 코드를 새로 작성하거나 변경할 때 항상 한글 주석을 라인 바이 라인으로 남겨,
+            의도와 흐름을 누구나 즉시 이해할 수 있도록 만듭니다.
+          </p>
         </section>
       </div>
     </main>
