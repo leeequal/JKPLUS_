@@ -9,42 +9,45 @@ export const ADMIN_USERS_DATA: AdminUser[] = [
         role: 'master' 
     },
     {
-        id: 'user-manager-a',
-        username: 'manager_a',
+        id: 'user-planner',
+        username: 'planner',
         password: '123',
         role: 'manager',
+        specialty: 'planner',
         permissions: {
             canManageMembers: true,
             canManageSites: true,
-            canManageDailyWork: true,
+            canManageDailyWork: false,
             canManageWages: false,
             canManageNotices: true,
         }
     },
     {
-        id: 'user-manager-b',
-        username: 'manager_b',
+        id: 'user-programmer',
+        username: 'programmer',
         password: '123',
         role: 'manager',
+        specialty: 'programmer',
+        permissions: {
+            canManageMembers: false,
+            canManageSites: true,
+            canManageDailyWork: true,
+            canManageWages: false,
+            canManageNotices: false,
+        }
+    },
+    {
+        id: 'user-tester',
+        username: 'tester',
+        password: '123',
+        role: 'manager',
+        specialty: 'tester',
         permissions: {
             canManageMembers: true,
             canManageSites: false,
             canManageDailyWork: true,
             canManageWages: true,
             canManageNotices: true,
-        }
-    },
-    {
-        id: 'user-manager-c',
-        username: 'manager_c',
-        password: '123',
-        role: 'manager',
-        permissions: {
-            canManageMembers: true,
-            canManageSites: true,
-            canManageDailyWork: false,
-            canManageWages: true,
-            canManageNotices: false,
         }
     }
 ];

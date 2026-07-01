@@ -36,6 +36,23 @@ const IconPermission: React.FC<{className?:string}> = ({className}) => (<svg xml
 const IconWage: React.FC<{className?:string}> = ({className}) => (<svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>);
 const IconNotice: React.FC<{className?:string}> = ({className}) => (<svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.136a1.76 1.76 0 011.176-2.311l8.65-3.071a1.76 1.76 0 012.311 1.176l2.147 6.136a1.76 1.76 0 01-.592 3.417l-9.23 3.322" /></svg>);
 
+const getUserRoleLabel = (user: AdminUser) => {
+    if (user.role === 'master') {
+        return '프로젝트 Master (총괄/조율)';
+    }
+
+    switch (user.specialty) {
+        case 'planner':
+            return '플래너';
+        case 'programmer':
+            return '프로그래머';
+        case 'tester':
+            return '테스터';
+        default:
+            return '운영자';
+    }
+};
+
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ children, currentView, setCurrentView, currentUser, onLogout }) => {
     const isMaster = currentUser.role === 'master';
@@ -105,7 +122,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, currentView, s
                         <div className="flex items-center space-x-2 bg-slate-900/60 border border-slate-900 px-3 py-1.5 rounded-xl">
                             <span className="w-2 h-2 bg-sky-400 rounded-full animate-pulse" />
                             <span className="text-xs text-slate-300 font-bold">
-                                <span className="text-slate-400">{currentUser.username}</span> ({currentUser.role === 'master' ? '마스터 총괄' : '운영자'})
+                                <span className="text-slate-400">{currentUser.username}</span> ({getUserRoleLabel(currentUser)})
                             </span>
                         </div>
                      </div>
