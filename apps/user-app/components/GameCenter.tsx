@@ -215,12 +215,12 @@ const OmokGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     };
 
     return (
-        <div className="flex flex-col items-center bg-slate-900 rounded-xl p-3 w-full max-w-md mx-auto">
-            <div className="w-full flex justify-between items-center mb-4 px-2">
-                <h3 className="text-xl font-bold text-slate-100">⚫⚪ AI 오목</h3>
+        <div className="flex flex-col items-center bg-gradient-to-b from-slate-900 to-slate-900/95 border border-slate-700/70 rounded-2xl p-4 w-full max-w-md mx-auto shadow-[0_16px_36px_rgba(0,0,0,0.35)]">
+            <div className="w-full flex justify-between items-center mb-4 px-1">
+                <h3 className="text-xl font-semibold tracking-tight text-slate-100">⚫⚪ AI 오목</h3>
                 <div className="flex gap-2">
-                    <button onClick={resetGame} className="px-3 py-1.5 bg-amber-600 text-white text-xs font-bold rounded hover:bg-amber-500 shadow-md">재시작</button>
-                    <button onClick={onBack} className="px-3 py-1.5 bg-slate-700 text-slate-300 text-xs font-bold rounded hover:bg-slate-600 shadow-md">나가기</button>
+                    <button onClick={resetGame} className="px-3 py-1.5 rounded-lg border border-amber-400/30 bg-amber-500/15 text-amber-300 text-xs font-semibold hover:bg-amber-500/25 transition">재시작</button>
+                    <button onClick={onBack} className="px-3 py-1.5 rounded-lg border border-slate-600 bg-slate-800 text-slate-200 text-xs font-semibold hover:bg-slate-700 transition">나가기</button>
                 </div>
             </div>
 
@@ -295,11 +295,11 @@ const OmokGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 )}
             </div>
             
-            <div className="mt-4 flex justify-center gap-8 text-sm font-medium text-slate-400 w-full">
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${turn === BLACK ? 'bg-slate-800 text-amber-400 border border-amber-500/50' : ''}`}>
+            <div className="mt-4 flex justify-center gap-4 text-sm font-medium text-slate-400 w-full">
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors ${turn === BLACK ? 'bg-slate-800 text-amber-300 border border-amber-500/40' : 'border border-transparent'}`}>
                     <div className="w-3 h-3 rounded-full bg-black border border-slate-600"></div> 나 (흑)
                 </div>
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${turn === WHITE ? 'bg-slate-800 text-amber-400 border border-amber-500/50' : ''}`}>
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors ${turn === WHITE ? 'bg-slate-800 text-amber-300 border border-amber-500/40' : 'border border-transparent'}`}>
                     <div className="w-3 h-3 rounded-full bg-white border border-slate-600"></div> AI (백) {isAiThinking && <span className="ml-1 animate-pulse">...</span>}
                 </div>
             </div>
@@ -405,12 +405,12 @@ const MahjongGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     };
 
     return (
-        <div className="flex flex-col items-center bg-slate-900 rounded-xl p-3 w-full max-w-md mx-auto">
-            <div className="w-full flex justify-between items-center mb-4 px-2">
-                <h3 className="text-xl font-bold text-slate-100">🀄 사천성 마작</h3>
+        <div className="flex flex-col items-center bg-gradient-to-b from-slate-900 to-slate-900/95 border border-slate-700/70 rounded-2xl p-4 w-full max-w-md mx-auto shadow-[0_16px_36px_rgba(0,0,0,0.35)]">
+            <div className="w-full flex justify-between items-center mb-4 px-1">
+                <h3 className="text-xl font-semibold tracking-tight text-slate-100">🀄 사천성 마작</h3>
                 <div className="flex gap-2">
-                    <button onClick={startNewGame} className="px-3 py-1.5 bg-amber-600 text-white text-xs font-bold rounded hover:bg-amber-500 shadow-md">재시작</button>
-                    <button onClick={onBack} className="px-3 py-1.5 bg-slate-700 text-slate-300 text-xs font-bold rounded hover:bg-slate-600 shadow-md">나가기</button>
+                    <button onClick={startNewGame} className="px-3 py-1.5 rounded-lg border border-amber-400/30 bg-amber-500/15 text-amber-300 text-xs font-semibold hover:bg-amber-500/25 transition">재시작</button>
+                    <button onClick={onBack} className="px-3 py-1.5 rounded-lg border border-slate-600 bg-slate-800 text-slate-200 text-xs font-semibold hover:bg-slate-700 transition">나가기</button>
                 </div>
             </div>
 
@@ -452,7 +452,7 @@ const MahjongGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 )}
             </div>
 
-            <div className="mt-4 w-full flex justify-between px-4 text-sm text-slate-400">
+            <div className="mt-4 w-full flex justify-between px-4 py-2 rounded-xl bg-slate-800/60 border border-slate-700/70 text-sm text-slate-300">
                 <span>남은 짝: {(TOTAL_TILES / 2) - matches}</span>
                 <span>매칭: {matches} / {TOTAL_TILES / 2}</span>
             </div>
@@ -657,14 +657,14 @@ const TetrisGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     };
 
     return (
-        <div className="flex flex-col items-center bg-slate-900 rounded-xl p-3 w-full max-w-md mx-auto">
-            <div className="w-full flex justify-between items-center mb-4 px-2">
-                <h3 className="text-xl font-bold text-slate-100">🧱 현장 벽돌 쌓기</h3>
+        <div className="flex flex-col items-center bg-gradient-to-b from-slate-900 to-slate-900/95 border border-slate-700/70 rounded-2xl p-4 w-full max-w-md mx-auto shadow-[0_16px_36px_rgba(0,0,0,0.35)]">
+            <div className="w-full flex justify-between items-center mb-4 px-1">
+                <h3 className="text-xl font-semibold tracking-tight text-slate-100">🧱 현장 벽돌 쌓기</h3>
                 <div className="flex gap-2">
-                    <button onClick={startGame} className="px-3 py-1.5 bg-amber-600 text-white text-xs font-bold rounded hover:bg-amber-500 shadow-md">
+                    <button onClick={startGame} className="px-3 py-1.5 rounded-lg border border-amber-400/30 bg-amber-500/15 text-amber-300 text-xs font-semibold hover:bg-amber-500/25 transition">
                         {gameOver ? '다시 시작' : '시작 / 리셋'}
                     </button>
-                    <button onClick={onBack} className="px-3 py-1.5 bg-slate-700 text-slate-300 text-xs font-bold rounded hover:bg-slate-600 shadow-md">나가기</button>
+                    <button onClick={onBack} className="px-3 py-1.5 rounded-lg border border-slate-600 bg-slate-800 text-slate-200 text-xs font-semibold hover:bg-slate-700 transition">나가기</button>
                 </div>
             </div>
 
@@ -702,16 +702,16 @@ const TetrisGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 )}
             </div>
 
-            <div className="mt-4 w-full px-4 flex justify-between items-center bg-slate-800 p-2 rounded-lg mb-4">
+            <div className="mt-4 w-full px-4 flex justify-between items-center bg-slate-800/70 border border-slate-700 p-2.5 rounded-xl mb-4">
                 <span className="text-slate-400 text-sm">Score</span>
-                <span className="text-amber-400 font-bold text-xl">{score}</span>
+                <span className="text-amber-300 font-semibold text-xl">{score}</span>
             </div>
 
             {/* Mobile Controls */}
             <div className="grid grid-cols-3 gap-2 w-full px-4 mb-2">
                 <div className="col-start-2 flex justify-center">
                     <button 
-                        className="w-16 h-16 bg-slate-700 rounded-full shadow-lg active:bg-amber-600 flex items-center justify-center border-b-4 border-slate-900 active:border-0 active:translate-y-1 transition-all"
+                        className="w-14 h-14 bg-slate-700/90 rounded-2xl shadow-lg active:bg-amber-600/80 flex items-center justify-center border border-slate-600 active:scale-95 transition-all"
                         onClick={() => playerRotate(stage, 1)}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
@@ -721,7 +721,7 @@ const TetrisGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <div className="grid grid-cols-3 gap-2 w-full px-4">
                 <div className="flex justify-center">
                     <button 
-                        className="w-16 h-16 bg-slate-700 rounded-full shadow-lg active:bg-amber-600 flex items-center justify-center border-b-4 border-slate-900 active:border-0 active:translate-y-1 transition-all"
+                        className="w-14 h-14 bg-slate-700/90 rounded-2xl shadow-lg active:bg-amber-600/80 flex items-center justify-center border border-slate-600 active:scale-95 transition-all"
                         onClick={() => movePlayer(-1)}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
@@ -729,7 +729,7 @@ const TetrisGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 </div>
                 <div className="flex justify-center">
                     <button 
-                        className="w-16 h-16 bg-slate-700 rounded-full shadow-lg active:bg-amber-600 flex items-center justify-center border-b-4 border-slate-900 active:border-0 active:translate-y-1 transition-all"
+                        className="w-14 h-14 bg-slate-700/90 rounded-2xl shadow-lg active:bg-amber-600/80 flex items-center justify-center border border-slate-600 active:scale-95 transition-all"
                         onClick={() => { setDropTime(null); drop(); setDropTime(1000 / (1 + (score / 500))); }}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7-7-7" /></svg>
@@ -737,7 +737,7 @@ const TetrisGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 </div>
                 <div className="flex justify-center">
                     <button 
-                        className="w-16 h-16 bg-slate-700 rounded-full shadow-lg active:bg-amber-600 flex items-center justify-center border-b-4 border-slate-900 active:border-0 active:translate-y-1 transition-all"
+                        className="w-14 h-14 bg-slate-700/90 rounded-2xl shadow-lg active:bg-amber-600/80 flex items-center justify-center border border-slate-600 active:scale-95 transition-all"
                         onClick={() => movePlayer(1)}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
@@ -785,7 +785,7 @@ const ReactionGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     return (
         <div 
-            className={`flex flex-col items-center justify-center h-96 rounded-xl cursor-pointer transition-colors select-none p-6 text-center
+            className={`flex flex-col items-center justify-center h-96 rounded-2xl border border-slate-700/70 cursor-pointer transition-colors select-none p-6 text-center shadow-[0_16px_36px_rgba(0,0,0,0.35)]
                 ${state === 'waiting' || state === 'finished' ? 'bg-slate-800' : ''}
                 ${state === 'ready' ? 'bg-red-900' : ''}
                 ${state === 'now' ? 'bg-green-600' : ''}
@@ -793,8 +793,8 @@ const ReactionGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             onMouseDown={handleMouseDown}
             onTouchStart={handleMouseDown}
         >
-            <h3 className="text-2xl font-bold text-white mb-4">⚡ 안전 순발력 테스트</h3>
-            <p className="text-lg text-slate-200 font-medium mb-2">{message}</p>
+            <h3 className="text-2xl font-semibold tracking-tight text-white mb-4">⚡ 안전 순발력 테스트</h3>
+            <p className="text-lg text-slate-100 font-medium mb-2">{message}</p>
             {score !== null && (
                 <div className="mt-4 p-4 bg-black/30 rounded-lg">
                     <p className="text-3xl font-bold text-amber-400">{score} ms</p>
@@ -803,9 +803,9 @@ const ReactionGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <div className="mt-8 text-sm text-slate-400">
                 작업 현장에서는 빠른 반응속도가 생명입니다!<br/>초록색 화면이 뜨자마자 화면을 터치하세요.
             </div>
-            <button 
+            <button
                 onClick={(e) => { e.stopPropagation(); onBack(); }}
-                className="mt-8 px-4 py-2 bg-slate-700 rounded-full text-sm hover:bg-slate-600"
+                className="mt-8 px-4 py-2 rounded-lg border border-slate-600 bg-slate-800 text-sm text-slate-200 hover:bg-slate-700 transition"
             >
                 게임 목록으로
             </button>
@@ -842,8 +842,8 @@ const LuckyGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center h-96 bg-slate-800 rounded-xl p-6 text-center">
-            <h3 className="text-2xl font-bold text-white mb-6">🍀 오늘의 현장 운세</h3>
+        <div className="flex flex-col items-center justify-center h-96 bg-gradient-to-b from-slate-900 to-slate-900/95 border border-slate-700/70 rounded-2xl p-6 text-center shadow-[0_16px_36px_rgba(0,0,0,0.35)]">
+            <h3 className="text-2xl font-semibold tracking-tight text-white mb-6">🍀 오늘의 현장 운세</h3>
             
             {isSpinning ? (
                 <div className="animate-spin text-6xl mb-6">🎲</div>
@@ -854,8 +854,8 @@ const LuckyGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             )}
 
             {result ? (
-                <div className="bg-amber-500/20 border border-amber-500/50 p-4 rounded-lg animate-fadeIn">
-                    <p className="text-lg font-semibold text-amber-300">{result}</p>
+                <div className="bg-amber-500/15 border border-amber-500/35 p-4 rounded-xl animate-fadeIn">
+                    <p className="text-lg font-semibold text-amber-200">{result}</p>
                 </div>
             ) : (
                 <p className="text-slate-400">선물 상자를 눌러 오늘의 운세를 확인하세요!</p>
@@ -865,13 +865,13 @@ const LuckyGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <button 
                     onClick={drawFortune}
                     disabled={isSpinning}
-                    className="px-6 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-md transition disabled:bg-slate-600"
+                    className="px-6 py-2 rounded-lg border border-amber-400/30 bg-amber-500/15 hover:bg-amber-500/25 text-amber-200 font-semibold transition disabled:bg-slate-600/70 disabled:text-slate-300"
                 >
                     {result ? '다시 뽑기' : '운세 보기'}
                 </button>
                 <button 
                     onClick={onBack}
-                    className="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium rounded-md transition"
+                    className="px-6 py-2 rounded-lg border border-slate-600 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium transition"
                 >
                     나가기
                 </button>
@@ -980,8 +980,8 @@ export const GameCenter: React.FC = () => {
     const [isNewsLoading, setIsNewsLoading] = useState(true);
     const [newsError, setNewsError] = useState<string | null>(null);
     const [activeNewsCategory, setActiveNewsCategory] = useState<NewsCategoryId>('general');
+    const [activeLoungeTab, setActiveLoungeTab] = useState<'news' | 'games'>('news');
     const [selectedNews, setSelectedNews] = useState<LoungeNewsItem | null>(null);
-    const [isGameListExpanded, setIsGameListExpanded] = useState(false);
 
     const GAMES: GameItem[] = [
         {
@@ -1090,6 +1090,30 @@ export const GameCenter: React.FC = () => {
                 <p className="text-slate-400 mt-2">현장에 필요한 뉴스를 먼저 확인하고, 원하실 때만 미니게임을 이용해 주세요.</p>
             </div>
 
+            <div className="mb-5 grid grid-cols-2 gap-2 rounded-xl border border-slate-700 bg-slate-900/70 p-1.5">
+                <button
+                    onClick={() => setActiveLoungeTab('news')}
+                    className={`px-3 py-2 rounded-lg text-sm font-semibold transition ${
+                        activeLoungeTab === 'news'
+                            ? 'bg-indigo-500/25 border border-indigo-400/40 text-indigo-200'
+                            : 'text-slate-300 hover:bg-slate-800'
+                    }`}
+                >
+                    📰 휴게실 뉴스
+                </button>
+                <button
+                    onClick={() => setActiveLoungeTab('games')}
+                    className={`px-3 py-2 rounded-lg text-sm font-semibold transition ${
+                        activeLoungeTab === 'games'
+                            ? 'bg-indigo-500/25 border border-indigo-400/40 text-indigo-200'
+                            : 'text-slate-300 hover:bg-slate-800'
+                    }`}
+                >
+                    🎮 미니게임
+                </button>
+            </div>
+
+            {activeLoungeTab === 'news' && (
             <div className="mb-6 bg-slate-800/40 border border-slate-700 rounded-xl p-5">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
                     <h3 className="text-lg font-bold text-slate-100">📰 주요 뉴스 브리핑</h3>
@@ -1152,24 +1176,16 @@ export const GameCenter: React.FC = () => {
                     ))}
                 </ul>
             </div>
+            )}
 
+            {activeLoungeTab === 'games' && (
             <div className="relative overflow-hidden bg-gradient-to-b from-slate-900 to-slate-900/90 border border-slate-700/70 rounded-2xl p-4 sm:p-5 shadow-[0_16px_40px_rgba(0,0,0,0.35)]">
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-slate-500/40 to-transparent" />
-                <button
-                    onClick={() => setIsGameListExpanded(prev => !prev)}
-                    className="w-full flex items-center justify-between text-left rounded-xl p-2 -m-2 hover:bg-slate-800/60 active:bg-slate-800/80 transition-colors"
-                >
-                    <div>
-                        <p className="text-sm sm:text-base font-semibold text-slate-100 tracking-tight">🎮 선택형 미니게임</p>
-                        <p className="text-xs sm:text-sm text-slate-400 mt-1">뉴스 확인 후, 짧게 리프레시할 수 있도록 준비했습니다.</p>
-                    </div>
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border border-amber-400/35 bg-amber-400/10 text-amber-300">
-                        {isGameListExpanded ? '접기' : '펼치기'}
-                    </span>
-                </button>
-
-                {isGameListExpanded && (
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                <div className="mb-4">
+                    <p className="text-sm sm:text-base font-semibold text-slate-100 tracking-tight">🎮 선택형 미니게임</p>
+                    <p className="text-xs sm:text-sm text-slate-400 mt-1">짧게 쉬고 싶을 때 바로 실행하실 수 있습니다.</p>
+                </div>
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                         {GAMES.map(game => (
                             <button
                                 key={game.id}
@@ -1195,9 +1211,9 @@ export const GameCenter: React.FC = () => {
                                 </div>
                             </button>
                         ))}
-                    </div>
-                )}
+                </div>
             </div>
+            )}
 
             {selectedNews && (
                 <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm p-3 sm:p-6">
