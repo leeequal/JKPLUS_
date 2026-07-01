@@ -153,7 +153,7 @@ const Router: React.FC = () => {
         <section className="mt-12 rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
           <h2 className="text-3xl font-bold text-white">주석 규칙</h2>
           <p className="mt-4 text-sm leading-7 text-slate-300">
-            Programmer는 사용자가 말한 바이브 코딩 흐름을 살리기 위해 코드를 새로 작성하거나 변경할 때 항상 한글 주석을 라인별로 남겨,
+            Programmer는 사용자가 원하는 작업 흐름을 살리기 위해 코드를 새로 작성하거나 변경할 때 항상 한글 주석을 라인별로 남겨,
             의도와 흐름을 누구나 즉시 이해할 수 있도록 만듭니다.
           </p>
         </section>
