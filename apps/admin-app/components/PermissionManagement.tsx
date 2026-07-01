@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AdminUser } from '../types';
+import { getManagerSpecialtyLabel } from '../utils/roleLabels';
 
 interface PermissionManagementProps {
     users: AdminUser[];
@@ -93,6 +94,7 @@ export const PermissionManagement: React.FC<PermissionManagementProps> = ({ user
                     <thead className="text-xs text-slate-300 uppercase bg-slate-700/50">
                         <tr>
                             <th className="px-6 py-3">아이디</th>
+                            <th className="px-6 py-3 text-center">담당 역할</th>
                             <th className="px-6 py-3 text-center">회원 관리</th>
                             <th className="px-6 py-3 text-center">현장 관리</th>
                             <th className="px-6 py-3 text-center">일일 출역 관리</th>
@@ -105,6 +107,7 @@ export const PermissionManagement: React.FC<PermissionManagementProps> = ({ user
                         {managers.map(user => user.permissions && (
                             <tr key={user.id} className="bg-slate-800/50 border-b border-slate-700 hover:bg-slate-800">
                                 <td className="px-6 py-4 font-medium text-slate-100">{user.username}</td>
+                                <td className="px-6 py-4 text-center font-semibold text-slate-200">{getManagerSpecialtyLabel(user.specialty)}</td>
                                 <td className="px-6 py-4 text-center">
                                     <input type="checkbox" checked={user.permissions.canManageMembers} onChange={e => handlePermissionChange(user.id, 'canManageMembers', e.target.checked)} className="h-4 w-4 rounded border-slate-500 bg-slate-600 text-amber-500 focus:ring-amber-500" />
                                 </td>

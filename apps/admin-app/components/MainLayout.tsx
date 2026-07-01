@@ -1,6 +1,7 @@
 import React from 'react';
 import { AdminView } from '../AdminApp';
 import { AdminUser } from '../types';
+import { getUserRoleLabel } from '../utils/roleLabels';
 
 interface MainLayoutProps {
     children: React.ReactNode;
@@ -105,7 +106,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, currentView, s
                         <div className="flex items-center space-x-2 bg-slate-900/60 border border-slate-900 px-3 py-1.5 rounded-xl">
                             <span className="w-2 h-2 bg-sky-400 rounded-full animate-pulse" />
                             <span className="text-xs text-slate-300 font-bold">
-                                <span className="text-slate-400">{currentUser.username}</span> ({currentUser.role === 'master' ? '마스터 총괄' : '운영자'})
+                                <span className="text-slate-400">{currentUser.username}</span> ({getUserRoleLabel(currentUser)})
                             </span>
                         </div>
                      </div>
