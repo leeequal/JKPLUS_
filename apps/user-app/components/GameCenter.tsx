@@ -909,10 +909,14 @@ const FALLBACK_NEWS: LoungeNewsItem[] = [
 ];
 
 const NEWS_CATEGORIES = [
-    { id: 'construction', label: '건설 일반', query: '건설 경기 현장 동향' },
-    { id: 'safety', label: '안전', query: '건설 현장 안전 사고 예방' },
-    { id: 'hiring', label: '채용', query: '건설 채용 인력 수급' },
-    { id: 'policy', label: '정책', query: '건설 정책 국토부' },
+    { id: 'general', label: '종합', query: '건설 OR 건축 OR 현장 OR 인력 OR 안전' },
+    { id: 'policy', label: '정치·정책', query: '국토부 OR 건설 정책 OR 입법 OR 규제' },
+    { id: 'economy', label: '경제', query: '건설 경기 OR 수주 OR 원자재 OR PF OR 분양' },
+    { id: 'society', label: '사회', query: '건설 사고 OR 산업재해 OR 노무 OR 임금 OR 고용' },
+    { id: 'world', label: '국제', query: '해외 건설 OR 글로벌 인프라 OR 해외 플랜트' },
+    { id: 'tech', label: 'IT·과학', query: '스마트건설 OR BIM OR 건설 AI OR 건설 로봇 OR 드론 측량' },
+    { id: 'sports', label: '스포츠', query: '스포츠 OR 축구 OR 야구 OR 농구 OR 배구' },
+    { id: 'entertainment', label: '연예', query: '연예 OR 아이돌 OR 배우 OR 드라마 OR 예능' },
 ] as const;
 
 type NewsCategoryId = (typeof NEWS_CATEGORIES)[number]['id'];
@@ -945,13 +949,20 @@ const formatRelativeTime = (value?: string) => {
 const getNewsTag = (title: string) => {
     if (title.includes('안전') || title.includes('사고') || title.includes('재해')) return '안전';
     if (title.includes('채용') || title.includes('인력') || title.includes('구인')) return '채용';
+    if (title.includes('수주') || title.includes('경기') || title.includes('분양') || title.includes('PF')) return '경제';
     if (title.includes('정책') || title.includes('국토부') || title.includes('규제')) return '정책';
+    if (title.includes('해외') || title.includes('글로벌') || title.includes('국제')) return '국제';
+    if (title.includes('AI') || title.includes('BIM') || title.includes('로봇') || title.includes('드론')) return '기술';
+    if (title.includes('축구') || title.includes('야구') || title.includes('농구') || title.includes('배구') || title.includes('스포츠')) return '스포츠';
+    if (title.includes('연예') || title.includes('아이돌') || title.includes('배우') || title.includes('드라마') || title.includes('예능')) return '연예';
     return '건설';
 };
 
 const getNewsPriority = (title: string) => {
     if (title.includes('사고') || title.includes('경보') || title.includes('폭염') || title.includes('호우')) return 3;
+    if (title.includes('산재') || title.includes('재해') || title.includes('안전수칙')) return 3;
     if (title.includes('안전') || title.includes('채용') || title.includes('수급')) return 2;
+    if (title.includes('국토부') || title.includes('입법') || title.includes('규제')) return 2;
     return 1;
 };
 
@@ -968,7 +979,7 @@ export const GameCenter: React.FC = () => {
     const [news, setNews] = useState<LoungeNewsItem[]>(FALLBACK_NEWS);
     const [isNewsLoading, setIsNewsLoading] = useState(true);
     const [newsError, setNewsError] = useState<string | null>(null);
-    const [activeNewsCategory, setActiveNewsCategory] = useState<NewsCategoryId>('construction');
+    const [activeNewsCategory, setActiveNewsCategory] = useState<NewsCategoryId>('general');
     const [selectedNews, setSelectedNews] = useState<LoungeNewsItem | null>(null);
     const [isGameListExpanded, setIsGameListExpanded] = useState(false);
 
@@ -976,35 +987,35 @@ export const GameCenter: React.FC = () => {
         {
             id: 'omok',
             title: 'AI 오목',
-            description: '인공지능과 펼치는 두뇌 싸움! 잠시 머리를 식혀보세요.',
+            description: 'AI와 정교한 수 읽기 대결을 즐겨보세요. 짧게 몰입하기 좋은 전략 게임입니다.',
             icon: <span className="text-3xl">⚫</span>,
             component: OmokGame
         },
         {
             id: 'mahjong',
             title: '사천성 마작',
-            description: '같은 그림의 마작패를 찾아 없애는 두뇌 퍼즐 게임!',
+            description: '같은 패를 빠르게 찾아 지우는 집중력 퍼즐입니다. 템포 있게 즐겨보세요.',
             icon: <span className="text-3xl">🀄</span>,
             component: MahjongGame
         },
         {
             id: 'tetris',
             title: '현장 벽돌 쌓기',
-            description: '빈틈없이 자재를 쌓아 올리세요! 시간 가는 줄 모르는 클래식 게임.',
+            description: '블록을 빈틈없이 정리해 점수를 올려보세요. 손맛이 좋은 클래식 모드입니다.',
             icon: <span className="text-3xl">🧱</span>,
             component: TetrisGame
         },
         {
             id: 'reaction',
             title: '안전 순발력 테스트',
-            description: '위험 상황 감지! 신호가 오면 얼마나 빨리 반응할 수 있나요?',
+            description: '신호가 뜨는 순간 터치! 나의 반응 속도를 간단하게 측정해 보세요.',
             icon: <span className="text-3xl">⚡</span>,
             component: ReactionGame
         },
         {
             id: 'lucky',
             title: '오늘의 현장 운세',
-            description: '오늘 하루 나의 작업 운세는? 재미로 보는 오늘의 운세!',
+            description: '가볍게 확인하는 오늘의 운세 카드. 쉬는 시간에 부담 없이 즐겨보세요.',
             icon: <span className="text-3xl">🍀</span>,
             component: LuckyGame
         }
@@ -1142,38 +1153,47 @@ export const GameCenter: React.FC = () => {
                 </ul>
             </div>
 
-            <div className="bg-slate-800/30 border border-slate-700/60 rounded-xl p-4">
+            <div className="relative overflow-hidden bg-gradient-to-b from-slate-900 to-slate-900/90 border border-slate-700/70 rounded-2xl p-4 sm:p-5 shadow-[0_16px_40px_rgba(0,0,0,0.35)]">
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-slate-500/40 to-transparent" />
                 <button
                     onClick={() => setIsGameListExpanded(prev => !prev)}
-                    className="w-full flex items-center justify-between text-left"
+                    className="w-full flex items-center justify-between text-left rounded-xl p-2 -m-2 hover:bg-slate-800/60 active:bg-slate-800/80 transition-colors"
                 >
                     <div>
-                        <p className="text-sm font-bold text-slate-200">🎮 선택형 미니게임</p>
-                        <p className="text-xs text-slate-500 mt-0.5">뉴스 확인 후 짧게 즐길 수 있도록 접어두었습니다.</p>
+                        <p className="text-sm sm:text-base font-semibold text-slate-100 tracking-tight">🎮 선택형 미니게임</p>
+                        <p className="text-xs sm:text-sm text-slate-400 mt-1">뉴스 확인 후, 짧게 리프레시할 수 있도록 준비했습니다.</p>
                     </div>
-                    <span className="text-xs font-bold text-amber-300">{isGameListExpanded ? '접기' : '펼치기'}</span>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border border-amber-400/35 bg-amber-400/10 text-amber-300">
+                        {isGameListExpanded ? '접기' : '펼치기'}
+                    </span>
                 </button>
 
                 {isGameListExpanded && (
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                         {GAMES.map(game => (
-                                <button
-                                    key={game.id}
-                                    onClick={() => setActiveGameId(game.id)}
-                                    className="flex items-start p-5 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 hover:border-amber-500 rounded-xl text-left transition-all group"
-                                >
-                                    <div className="p-3 bg-slate-900 rounded-lg mr-4 group-hover:scale-110 transition-transform">
-                                        {game.icon}
-                                    </div>
-                                    <div>
-                                        <h3 className="text-lg font-bold text-slate-200 group-hover:text-amber-400 transition-colors">
+                            <button
+                                key={game.id}
+                                onClick={() => setActiveGameId(game.id)}
+                                className="group relative overflow-hidden flex items-start gap-3 sm:gap-4 p-4 sm:p-5 rounded-2xl border border-slate-700/80 bg-slate-800/60 hover:bg-slate-800/95 hover:border-slate-500/70 active:scale-[0.99] transition-all duration-200 text-left"
+                            >
+                                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-r from-white/[0.03] to-transparent" />
+                                <div className="relative shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl border border-slate-600/70 bg-slate-900/90 flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                                    {game.icon}
+                                </div>
+                                <div className="relative min-w-0">
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <h3 className="text-base sm:text-lg font-semibold text-slate-100 tracking-tight group-hover:text-white transition-colors">
                                             {game.title}
                                         </h3>
-                                        <p className="text-sm text-slate-400 mt-1 leading-relaxed">
-                                            {game.description}
-                                        </p>
+                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-700/70 text-slate-300 border border-slate-600/70">
+                                            빠른 플레이
+                                        </span>
                                     </div>
-                                </button>
+                                    <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+                                        {game.description}
+                                    </p>
+                                </div>
+                            </button>
                         ))}
                     </div>
                 )}
